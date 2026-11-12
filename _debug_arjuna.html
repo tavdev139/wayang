@@ -1,0 +1,71 @@
+
+<!doctype html><html><head><style>
+body{background:#0b0604;margin:0;color:#f4e7cd;font-family:Inter}
+#wrap{padding:32px;display:flex;flex-direction:column;gap:18px}
+h2{margin:0 0 8px;font-size:14px;color:#d9a441}
+.canvas-wrap{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.canvas-wrap label{font-size:11px;color:#cdb894;min-width:150px}
+canvas{border:1px solid rgba(217,164,65,.4);background:#0b0604;border-radius:6px;padding:14px}
+</style></head><body>
+<h2>Arjuna parts laid out as a puppet</h2>
+<div class="canvas-wrap">
+  <label>upper-arm-arjuna-l (18x115)</label>
+  <canvas id="ca" width="400" height="400"></canvas>
+</div>
+<div class="canvas-wrap">
+  <label>forearm-arjuna-l (19x112)</label>
+  <canvas id="cb" width="400" height="400"></canvas>
+</div>
+<div class="canvas-wrap">
+  <label>hand-arjuna-l (56x35)</label>
+  <canvas id="cc" width="400" height="400"></canvas>
+</div>
+<div class="canvas-wrap">
+  <label>body-arjuna (262x482, cut to 262x482)</label>
+  <canvas id="cd" width="400" height="400"></canvas>
+</div>
+<script>
+const imgs = {
+  ca:new Image(), cb:new Image(), cc:new Image(), cd:new Image(),
+  draw(){
+    const parts=[
+      {id:'ca',src:imgs.ca,ox:0,oy:0,label:'upper-arm-arjuna-l'},
+      {id:'cb',src:imgs.cb,ox:0,oy:0,label:'forearm-arjuna-l'},
+      {id:'cc',src:imgs.cc,ox:0,oy:0,label:'hand-arjuna-l'},
+      {id:'cd',src:imgs.cd,ox:0,oy:0,label:'body-arjuna'},
+    ];
+    for(const p of parts){
+      const c=document.getElementById(p.id).getContext('2d');
+      c.clearRect(0,0,c.width,c.height);
+      c.drawImage(p.src, p.ox, p.oy);
+      // label
+      c.fillStyle='#cdb894'; c.font='12px Inter'; c.fillText(p.label, 8, 22);
+      c.strokeStyle='rgba(217,164,65,.6)'; c.lineWidth=2;
+      // draw crosshair at center of a 18x115 strip (x=7..8, y=0..114 scaled)
+      // upper arm
+      c.beginPath(); c.arc(8, 20, 5, 0, 7); c.stroke();
+      c.fillStyle='#f2c76b'; c.font='11px Inter'; c.fillText('prox=(7,0)', 18, 16);
+      c.beginPath(); c.arc(8, 112, 5, 0, 7); c.stroke();
+      c.fillStyle='#f2c76b'; c.fillText('dist=(7,114)', 18, 110);
+    }
+    // forearm
+    const c2=document.getElementById('cb').getContext('2d');
+    c2.beginPath(); c2.arc(8, 20, 5, 0, 7); c2.stroke();
+    c2.fillStyle='#f2c76b'; c2.fillText('prox=(7,0)', 18, 16);
+    c2.beginPath(); c2.arc(8, 110, 5, 0, 7); c2.stroke();
+    c2.fillStyle='#f2c76b'; c2.fillText('dist=(7,111)', 18, 110);
+    // hand
+    const c3=document.getElementById('cc').getContext('2d');
+    c3.beginPath(); c3.arc(28, 15, 5, 0, 7); c3.stroke();
+    c3.fillStyle='#f2c76b'; c3.fillText('prox=(28,0)', 36, 12);
+    c3.beginPath(); c3.arc(28, 32, 5, 0, 7); c3.stroke();
+    c3.fillStyle='#f2c76b'; c3.fillText('grip=(28,34)', 36, 30);
+  }
+};
+imgs.ca.src='assets/upper-arm-arjuna-l.png';
+imgs.cb.src='assets/forearm-arjuna-l.png';
+imgs.cc.src='assets/hand-arjuna-l.png';
+imgs.cd.src='assets/body-arjuna.png';
+imgs.draw();
+</script>
+</body></html>
