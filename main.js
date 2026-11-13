@@ -13,6 +13,20 @@ const preview = $('preview');
 const previewBox = $('preview-box');
 const pctx = preview.getContext('2d');
 
+const BACKGROUNDS = [
+  { label: 'Background satu', key: 'background', src: 'assets/background.png' },
+  { label: 'Background dua', key: 'background-2', src: 'assets/background-2.png' },
+  { label: 'Background tiga', key: 'background-3', src: 'assets/background-3.png' },
+  { label: 'Background empat', key: 'background-4', src: 'assets/background-4.png' },
+  { label: 'Background lima', key: 'background-5', src: 'assets/background-5.jpg' },
+];
+const MUSIC_TRACKS = [
+  { id: 'music-1', label: 'Musik satu', src: 'assets/backsound.mp3', beats: 'assets/backsound-beats.json' },
+  { id: 'music-2', label: 'Musik dua', src: 'assets/music-2.mp3' },
+  { id: 'music-3', label: 'Musik tiga', src: 'assets/music-3.mp3' },
+  { id: 'music-4', label: 'Musik empat', src: 'assets/music-4.mp3' },
+];
+
 const HAND_EDGES = [
   [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11], [11, 12],
   [9, 13], [13, 14], [14, 15], [15, 16], [13, 17], [17, 18], [18, 19], [19, 20], [0, 17],
@@ -28,7 +42,7 @@ let renderer;
 try {
   renderer = new Renderer(canvas);
   await Promise.all([
-    renderer.loadTexture('background', 'assets/background.png'),
+    ...BACKGROUNDS.map(({ key, src }) => renderer.loadTexture(key, src)),
     // every character in characters.js, each under its own "<id>/<part>" key
     ...characterTextures().map(([key, src]) => renderer.loadTexture(key, src)),
   ]);
@@ -162,6 +176,10 @@ $('opt-facing').addEventListener('change', (e) => {
   facingMode = e.target.value;
   applyFacing();
 });
+const backgroundInput = $('opt-background');
+for (const background of BACKGROUNDS) backgroundInput.add(new Option(background.label, background.key));
+backgroundInput.value = BACKGROUNDS[0].key;
+backgroundInput.addEventListener('change', (e) => renderer.setBackground(e.target.value));
 $('opt-camera').addEventListener('change', (e) => {
   showPreview = e.target.checked;
   syncPreview();
@@ -197,11 +215,35 @@ $('opt-size').addEventListener('input', (e) => {
 });
 
 // ---------- backsound ----------
-const music = new BackgroundMusic('assets/backsound.mp3');
+const music = new BackgroundMusic(MUSIC_TRACKS[0].src);
 const beatClock = new BeatClock(music.el);
 beatClock.load('assets/backsound-beats.json');
 window.wayang.music = music;
 window.wayang.beatClock = beatClock;
+const musicInput = $('opt-music');
+for (const track of MUSIC_TRACKS) musicInput.add(new Option(track.label, track.id));
+musicInput.value = MUSIC_TRACKS[0].id;
+let selectedMusic = MUSIC_TRACKS[0];
+let musicSelectionVersion = 0;
+musicInput.addEventListener('change', async (e) => {
+  const track = MUSIC_TRACKS.find((item) => item.id === e.target.value);
+  if (!track) throw new Error(`Unknown music track "${e.target.value}"`);
+  const version = ++musicSelectionVersion;
+  try {
+    beatClock.setBeats(null);
+    if (track.beats) beatClock.load(track.beats);
+    await music.setTrack(track.src);
+    if (version !== musicSelectionVersion) return;
+    selectedMusic = track;
+  } catch (err) {
+    console.error(err);
+    if (version !== musicSelectionVersion) return;
+    musicInput.value = selectedMusic.id;
+    beatClock.setBeats(null);
+    if (selectedMusic.beats) beatClock.load(selectedMusic.beats);
+    showToast(`Musik tidak dapat diputar: ${err?.message || err}`);
+  }
+});
 const soundBtn = $('sound-toggle');
 const volumeInput = $('opt-volume');
 volumeInput.value = String(music.volume);

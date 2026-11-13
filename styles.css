@@ -208,6 +208,8 @@ kbd:first-child { margin-left: 0; }
   top: 62px;
   right: 16px;
   width: min(290px, calc(100vw - 32px));
+  max-height: calc(100vh - 78px);
+  overflow-y: auto;
   padding: 16px 18px;
   display: grid;
   gap: 12px;

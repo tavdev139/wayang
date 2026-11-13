@@ -394,6 +394,12 @@ export class Renderer {
     this.tex[key] = { tex, w: img.naturalWidth, h: img.naturalHeight };
   }
 
+  setBackground(key) {
+    const texture = this.tex[key];
+    if (!texture) throw new Error(`Unknown background texture "${key}"`);
+    this.tex.background = texture;
+  }
+
   makeRT(w, h, float) {
     const gl = this.gl;
     const tex = gl.createTexture();

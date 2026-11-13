@@ -13,6 +13,10 @@ Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada `or
 - Atau lewat alamat: `index.html?left=arjuna&right=original`.
 - Pasangan awal diatur di `DEFAULT_PAIR` (bagian bawah `characters.js`).
 
+## Latar dan musik
+
+Pilih **Background** dan **Music** dari Settings. Background satu dan Musik satu adalah pilihan bawaan; pilihan berikutnya memakai berkas di `assets/`. Musik baru memakai ketukan stabil untuk kiprahan karena belum memiliki berkas grid ketukan.
+
 ## Menambah karakter
 
 Satu wayang terdiri dari **badan** + **dua lengan**, tiap lengan 3 potongan (lengan atas, lengan bawah, tangan).

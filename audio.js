@@ -5,6 +5,7 @@ export class BeatClock {
   constructor(audioEl, fallbackPeriod = 0.68) {
     this.el = audioEl;
     this.beats = null;
+    this.loadToken = 0;
     this.fallback = fallbackPeriod;
     this.mt = 0; // smoothed music time
     this.pos = 0;
@@ -12,12 +13,30 @@ export class BeatClock {
   }
 
   async load(url) {
+    const token = ++this.loadToken;
     try {
-      const data = await (await fetch(url)).json();
-      if (Array.isArray(data.beats) && data.beats.length > 2) this.beats = data.beats;
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const data = await response.json();
+      if (token !== this.loadToken) return;
+      if (Array.isArray(data.beats) && data.beats.length > 2) this.setBeats(data.beats);
+      else {
+        this.setBeats(null);
+        console.warn('Beat grid unavailable, dancing to a steady pulse');
+      }
     } catch (err) {
+      if (token !== this.loadToken) return;
+      this.setBeats(null);
       console.warn('Beat grid unavailable, dancing to a steady pulse', err);
     }
+  }
+
+  setBeats(beats) {
+    this.loadToken++;
+    this.beats = Array.isArray(beats) && beats.length > 2 ? beats : null;
+    this.mt = this.el.currentTime || 0;
+    this.pos = this.beats ? this.posAt(this.mt) : 0;
+    this.period = this.beats ? this.periodAt(this.mt) : this.fallback;
   }
 
   // continuous beat index at music time t
@@ -77,6 +96,7 @@ export class BackgroundMusic {
     this.el.volume = 0;
     this.started = false;
     this.fadeRaf = 0;
+    this.trackVersion = 0;
     const saved = this.load();
     this.volume = saved.volume ?? 0.6;
     this.muted = saved.muted ?? false;
@@ -119,13 +139,60 @@ export class BackgroundMusic {
     if (this.started) return;
     this.started = true;
     if (this.muted) return;
+    const version = this.trackVersion;
     try {
       await this.el.play();
+      if (version !== this.trackVersion) return;
       this.fadeTo(this.target, 3);
     } catch (err) {
       // still blocked (no real gesture yet) — try again on the next one
-      this.started = false;
+      if (version === this.trackVersion) this.started = false;
       console.warn('Backsound could not start yet:', err?.message || err);
+    }
+  }
+
+  async setTrack(src) {
+    const url = new URL(src, document.baseURI).href;
+    if (this.el.src === url) {
+      if (!this.muted) await this.start();
+      return;
+    }
+
+    const version = ++this.trackVersion;
+    const shouldPlay = !this.muted;
+    const previousSrc = this.el.src;
+    const previousTime = this.el.currentTime;
+    const wasPlaying = !this.el.paused;
+    cancelAnimationFrame(this.fadeRaf);
+    this.el.pause();
+    this.el.volume = 0;
+    this.el.src = src;
+    this.el.load();
+    if (!shouldPlay) return;
+
+    this.started = true;
+    try {
+      await this.el.play();
+      if (version === this.trackVersion) this.fadeTo(this.target, wasPlaying ? 0.8 : 3);
+    } catch (err) {
+      if (version === this.trackVersion) {
+        this.started = false;
+        this.el.pause();
+        this.el.src = previousSrc;
+        this.el.load();
+        if (wasPlaying) {
+          try {
+            await this.el.play();
+            this.el.currentTime = previousTime;
+            this.started = true;
+            this.fadeTo(this.target, 0.4);
+          } catch (restoreErr) {
+            console.warn('Previous music could not resume:', restoreErr?.message || restoreErr);
+          }
+        }
+      }
+      console.warn('Selected music could not start:', err?.message || err);
+      throw err;
     }
   }
 
