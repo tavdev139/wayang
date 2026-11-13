@@ -24,6 +24,7 @@ class Arm {
     this.hand = parts['hand' + side];
     this.shoulder = body.shoulder[side];
     this.rest = rest[side]; // relaxed hanging pose: offset from the shoulder, body-image pixels
+    this.damping = character.armDamping ?? 1;
 
     const u = sub(this.upper.dist, this.upper.prox);
     this.Lu = len(u);
@@ -37,9 +38,9 @@ class Arm {
 
     // Loose riveted joints: under-damped, and the forearm/hand looser than the upper arm, so a snap
     // travels down the arm and the hand whips past and swings back (as in a dalang's sabet).
-    this.rotU = new Spring(0, 260, 0.34);
-    this.rotF = new Spring(0, 210, 0.26);
-    this.rotH = new Spring(0, 110, 0.2);
+    this.rotU = new Spring(0, 260, 0.34 * this.damping);
+    this.rotF = new Spring(0, 210, 0.26 * this.damping);
+    this.rotH = new Spring(0, 110, 0.2 * this.damping);
     this.target = null; // smoothed world target (Spring2)
     this.rodX = new Spring(0, 45, 0.75);
     this.solution = { rotU: 0, rotF: 0 };
@@ -302,7 +303,7 @@ export class Puppet {
       // the rod tip: springy while you play, whippier while dancing
       for (const s of [arm.target.sx, arm.target.sy]) {
         s.k = snappy ? 560 : 320;
-        s.zeta = snappy ? 0.3 : 0.5;
+        s.zeta = (snappy ? 0.3 : 0.5) * arm.damping;
       }
       arm.target.step(tgt[0], tgt[1], dt);
 
@@ -312,12 +313,13 @@ export class Puppet {
       arm.rotH.v += kick(rotV(sub(arm.hand.grip, arm.hand.prox), arm.rotH.x), 0.14);
       arm.rotU.stepAngle(arm.solution.rotU, dt);
       arm.rotF.stepAngle(arm.solution.rotF, dt);
-      arm.rotH.stepAngle(arm.rotF.x, dt);
+      if (!this.char.rigidHand) arm.rotH.stepAngle(arm.rotF.x, dt);
       // the rod holds the hand, so the arm can flail past its pose but never whirl round: hitting the limit
       // bounces it back (this is also what stops the loose joints resonating with a rhythmic hand)
       rodLimit(arm.rotU, arm.solution.rotU, 0.7);
       rodLimit(arm.rotF, arm.solution.rotF, 0.9);
-      rodLimit(arm.rotH, arm.rotF.x, 0.8);
+      if (this.char.rigidHand) arm.rotH.snap(arm.rotF.x);
+      else rodLimit(arm.rotH, arm.rotF.x, 0.8);
 
       // the rod's lower end sits where the dalang's hand is (below the frame)
       const restRod = arm.target.x + (this.pos.x - arm.target.x) * 0.3;

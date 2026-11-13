@@ -7,7 +7,7 @@ Jalankan dengan server statis apa pun dari folder ini, misalnya `python -m http.
 
 ## Karakter
 
-Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada `original` dan `arjuna`.
+Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada `original`, `arjuna`, `wayang-baru`, dan `wayang-emas`.
 
 - Pilih karakter di **Settings → Left puppet / Right puppet**.
 - Atau lewat alamat: `index.html?left=arjuna&right=original`.

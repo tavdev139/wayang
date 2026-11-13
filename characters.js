@@ -14,6 +14,8 @@
 //   arms    { L: {upper, fore, hand}, R: {...} }, each piece { src, size, prox, dist | grip } in that PNG's own pixels
 //             prox   the rivet toward the body  ·  dist   the rivet toward the hand  ·  grip   where the rod holds the hand
 //   rest    where each hand hangs when you are not steering it: offsets from its shoulder, in body-image pixels
+//   armDamping optional multiplier for arm spring damping (defaults to 1)
+//   rigidHand optional flag to make the palm follow the forearm without wrist flex
 
 // A pair of arm pieces that are the same art turned 180 degrees (the original puppet draws its right arm that way).
 const rot180 = (p, size) => [size[0] - p[0], size[1] - p[1]];
@@ -43,6 +45,34 @@ const ARJUNA_ARMS = {
     upper: { src: 'assets/upper-arm-arjuna-r.png', size: [43, 139], prox: [19.5, 8], dist: [21, 126] },
     fore: { src: 'assets/forearm-arjuna-r.png', size: [45, 141], prox: [21, 12], dist: [27.5, 128] },
     hand: { src: 'assets/hand-arjuna-r.png', size: [82, 63], prox: [64.5, 12], grip: [16, 50] },
+  },
+};
+
+// Wayang Baru: proportions and rivet points measured from the supplied puppet photos.
+const WAYANG_BARU_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-wayang-baru-l.png', size: [155, 382], prox: [110, 31], dist: [89, 341] },
+    fore: { src: 'assets/forearm-wayang-baru-l.png', size: [83, 276], prox: [40, 37], dist: [36, 252] },
+    hand: { src: 'assets/hand-wayang-baru-l.png', size: [196, 403], prox: [62, 30], grip: [62, 142] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-wayang-baru-r.png', size: [110, 378], prox: [45, 35], dist: [59, 331] },
+    fore: { src: 'assets/forearm-wayang-baru-r.png', size: [84, 277], prox: [43, 32], dist: [39, 247] },
+    hand: { src: 'assets/hand-wayang-baru-r.png', size: [232, 292], prox: [157, 33], grip: [168, 112] },
+  },
+};
+
+// Wayang Emas: separate gold arm pieces cut from the supplied reference photos.
+const WAYANG_EMAS_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-wayang-emas-l.png', size: [129, 258], prox: [96, 19], dist: [80, 239] },
+    fore: { src: 'assets/forearm-wayang-emas-l.png', size: [62, 257], prox: [31, 17], dist: [31, 240] },
+    hand: { src: 'assets/hand-wayang-emas-l.png', size: [251, 126], prox: [27, 55], grip: [27, 55] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-wayang-emas-r.png', size: [103, 266], prox: [43, 19], dist: [41, 247] },
+    fore: { src: 'assets/forearm-wayang-emas-r.png', size: [62, 264], prox: [30, 18], dist: [30, 247] },
+    hand: { src: 'assets/hand-wayang-emas-r.png', size: [253, 128], prox: [27, 59], grip: [27, 59] },
   },
 };
 
@@ -85,6 +115,42 @@ const RAW = [
     },
     arms: ARJUNA_ARMS,
     rest: { L: [-38, 238], R: [-36, 244] },
+  },
+  {
+    id: 'wayang-baru',
+    name: 'Wayang baru',
+    scale: 1,
+    body: {
+      src: 'assets/body-wayang-baru.png',
+      size: [768, 1376],
+      anchor: [384, 760],
+      shoulder: { L: [151, 438], R: [649, 428] },
+      stickTop: [384, 325],
+      stickFoot: [384, 1358],
+      ties: [470, 1010, 1260],
+    },
+    arms: WAYANG_BARU_ARMS,
+    armDamping: 2,
+    rigidHand: true,
+    rest: { L: [-12, 520], R: [-25, 520] },
+  },
+  {
+    id: 'wayang-emas',
+    name: 'Wayang emas',
+    scale: 1.38,
+    body: {
+      src: 'assets/body-wayang-emas.png',
+      size: [768, 1029],
+      anchor: [384, 564],
+      shoulder: { L: [274, 292], R: [596, 292] },
+      stickTop: [384, 205],
+      stickFoot: [384, 1012],
+      ties: [333, 720, 947],
+    },
+    arms: WAYANG_EMAS_ARMS,
+    armDamping: 2,
+    rigidHand: true,
+    rest: { L: [-30, 390], R: [30, 390] },
   },
 ];
 
