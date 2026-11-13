@@ -25,6 +25,7 @@ class Arm {
     this.shoulder = body.shoulder[side];
     this.rest = rest[side]; // relaxed hanging pose: offset from the shoulder, body-image pixels
     this.damping = character.armDamping ?? 1;
+    this.jointDamping = character.jointDamping ?? this.damping;
 
     const u = sub(this.upper.dist, this.upper.prox);
     this.Lu = len(u);
@@ -38,9 +39,9 @@ class Arm {
 
     // Loose riveted joints: under-damped, and the forearm/hand looser than the upper arm, so a snap
     // travels down the arm and the hand whips past and swings back (as in a dalang's sabet).
-    this.rotU = new Spring(0, 260, 0.34 * this.damping);
-    this.rotF = new Spring(0, 210, 0.26 * this.damping);
-    this.rotH = new Spring(0, 110, 0.2 * this.damping);
+    this.rotU = new Spring(0, 260, 0.34 * this.jointDamping);
+    this.rotF = new Spring(0, 210, 0.26 * this.jointDamping);
+    this.rotH = new Spring(0, 110, 0.2 * this.jointDamping);
     this.target = null; // smoothed world target (Spring2)
     this.rodX = new Spring(0, 45, 0.75);
     this.solution = { rotU: 0, rotF: 0 };

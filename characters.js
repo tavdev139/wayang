@@ -15,6 +15,7 @@
 //             prox   the rivet toward the body  ·  dist   the rivet toward the hand  ·  grip   where the rod holds the hand
 //   rest    where each hand hangs when you are not steering it: offsets from its shoulder, in body-image pixels
 //   armDamping optional multiplier for arm spring damping (defaults to 1)
+//   jointDamping optional multiplier for shoulder, elbow, and wrist hinge damping (defaults to armDamping)
 //   rigidHand optional flag to make the palm follow the forearm without wrist flex
 
 // A pair of arm pieces that are the same art turned 180 degrees (the original puppet draws its right arm that way).
@@ -76,6 +77,32 @@ const WAYANG_EMAS_ARMS = {
   },
 };
 
+const WERKUDARA_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-werkudara-l.png', size: [424, 76], prox: [392, 36], dist: [30, 36] },
+    fore: { src: 'assets/forearm-werkudara-l.png', size: [249, 113], prox: [194, 56], dist: [20, 57] },
+    hand: { src: 'assets/hand-werkudara-l.png', size: [136, 200], prox: [62, 180], grip: [67, 103] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-werkudara-r.png', size: [428, 78], prox: [35, 34], dist: [399, 33] },
+    fore: { src: 'assets/forearm-werkudara-r.png', size: [186, 76], prox: [20, 29], dist: [168, 29] },
+    hand: { src: 'assets/hand-werkudara-r.png', size: [207, 132], prox: [22, 94], grip: [112, 90] },
+  },
+};
+
+const YUDISTIRA_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-yudistira-l.png', size: [222, 85], prox: [197, 40], dist: [0, 39] },
+    fore: { src: 'assets/forearm-yudistira-l.png', size: [277, 74], prox: [261, 30], dist: [33, 30] },
+    hand: { src: 'assets/hand-yudistira-l.png', size: [71, 137], prox: [32, 15], grip: [35, 79] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-yudistira-r.png', size: [222, 86], prox: [23, 40], dist: [222, 42] },
+    fore: { src: 'assets/forearm-yudistira-r.png', size: [273, 73], prox: [0, 36], dist: [242, 34] },
+    hand: { src: 'assets/hand-yudistira-r.png', size: [77, 137], prox: [39, 14], grip: [39, 79] },
+  },
+};
+
 const RAW = [
   {
     id: 'original',
@@ -118,7 +145,7 @@ const RAW = [
   },
   {
     id: 'wayang-baru',
-    name: 'Wayang baru',
+    name: 'Hanoman',
     scale: 1,
     body: {
       src: 'assets/body-wayang-baru.png',
@@ -131,12 +158,12 @@ const RAW = [
     },
     arms: WAYANG_BARU_ARMS,
     armDamping: 2,
-    rigidHand: true,
+    jointDamping: 3,
     rest: { L: [-12, 520], R: [-25, 520] },
   },
   {
     id: 'wayang-emas',
-    name: 'Wayang emas',
+    name: 'Gatot Kaca',
     scale: 1.38,
     body: {
       src: 'assets/body-wayang-emas.png',
@@ -149,8 +176,44 @@ const RAW = [
     },
     arms: WAYANG_EMAS_ARMS,
     armDamping: 2,
-    rigidHand: true,
+    jointDamping: 3,
     rest: { L: [-30, 390], R: [30, 390] },
+  },
+  {
+    id: 'werkudara',
+    name: 'Werkudara',
+    scale: 1.075,
+    body: {
+      src: 'assets/body-werkudara.png',
+      size: [661, 1281],
+      anchor: [335, 690],
+      shoulder: { L: [162, 405], R: [572, 376] },
+      stickTop: [340, 300],
+      stickFoot: [340, 1260],
+      ties: [430, 940, 1170],
+    },
+    arms: WERKUDARA_ARMS,
+    armDamping: 1.5,
+    jointDamping: 3,
+    rest: { L: [-20, 430], R: [20, 490] },
+  },
+  {
+    id: 'yudistira',
+    name: 'Yudistira',
+    scale: 1.26,
+    body: {
+      src: 'assets/body-yudistira.png',
+      size: [723, 1096],
+      anchor: [360, 560],
+      shoulder: { L: [205, 282], R: [640, 273] },
+      stickTop: [360, 235],
+      stickFoot: [360, 1080],
+      ties: [315, 720, 990],
+    },
+    arms: YUDISTIRA_ARMS,
+    armDamping: 1.5,
+    jointDamping: 3,
+    rest: { L: [-15, 420], R: [15, 420] },
   },
 ];
 
