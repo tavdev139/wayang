@@ -26,6 +26,53 @@ const MUSIC_TRACKS = [
   { id: 'music-3', label: 'Musik tiga', src: 'assets/music-3.mp3' },
   { id: 'music-4', label: 'Musik empat', src: 'assets/music-4.mp3' },
 ];
+const QUIZ_QUESTIONS = [
+  {
+    question: 'Siapakah Pandawa yang terkenal sebagai pemanah ulung?',
+    options: ['Arjuna', 'Werkudara', 'Yudistira', 'Hanoman'],
+    answer: 'Arjuna',
+    fact: 'Arjuna dikenal sebagai Pandawa yang mahir memanah.',
+  },
+  {
+    question: 'Werkudara juga dikenal dengan nama siapa?',
+    options: ['Bima', 'Nakula', 'Arjuna', 'Gatot Kaca'],
+    answer: 'Bima',
+    fact: 'Werkudara adalah salah satu nama lain Bima.',
+  },
+  {
+    question: 'Siapakah Pandawa tertua?',
+    options: ['Yudistira', 'Arjuna', 'Sadewa', 'Werkudara'],
+    answer: 'Yudistira',
+    fact: 'Yudistira adalah putra tertua di antara Pandawa.',
+  },
+  {
+    question: 'Gatot Kaca adalah putra dari siapa?',
+    options: ['Bima dan Arimbi', 'Arjuna dan Subadra', 'Yudistira dan Drupadi', 'Nakula dan Sembadra'],
+    answer: 'Bima dan Arimbi',
+    fact: 'Dalam kisah wayang Jawa, Gatot Kaca adalah putra Bima dan Arimbi.',
+  },
+  {
+    question: 'Siapakah tokoh kera putih yang membantu Rama mencari Sinta?',
+    options: ['Hanoman', 'Gareng', 'Werkudara', 'Gatot Kaca'],
+    answer: 'Hanoman',
+    fact: 'Hanoman membantu Rama dalam kisah pencarian Dewi Sinta.',
+  },
+  {
+    question: 'Hanoman dikenal sebagai putra siapa dalam pewayangan?',
+    options: ['Batara Bayu', 'Batara Guru', 'Batara Surya', 'Batara Indra'],
+    answer: 'Batara Bayu',
+    fact: 'Dalam pewayangan, Hanoman dikenal sebagai putra Batara Bayu.',
+  },
+];
+
+function shuffled(items) {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
 
 const HAND_EDGES = [
   [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [5, 9], [9, 10], [10, 11], [11, 12],
@@ -153,7 +200,124 @@ canvas.addEventListener(
 
 const settings = $('settings');
 const settingsToggle = $('settings-toggle');
+const menuToggle = $('menu-toggle');
+const appMenu = $('app-menu');
+const quizModal = $('quiz-modal');
+const quizGame = $('quiz-game');
+const quizResults = $('quiz-results');
+const quizProgress = $('quiz-progress');
+const quizScore = $('quiz-score');
+const quizQuestion = $('quiz-question');
+const quizOptions = $('quiz-options');
+const quizFeedback = $('quiz-feedback');
+const quizNext = $('quiz-next');
+const quizResultScore = $('quiz-result-score');
+let quizQuestions = [];
+let quizIndex = 0;
+let quizPoints = 0;
+let quizAnswered = false;
+
+function closeAppMenu() {
+  appMenu.hidden = true;
+  menuToggle.setAttribute('aria-expanded', 'false');
+}
+
+function renderQuizQuestion() {
+  const question = quizQuestions[quizIndex];
+  quizProgress.textContent = `Soal ${quizIndex + 1} dari ${quizQuestions.length}`;
+  quizScore.textContent = `Skor: ${quizPoints}`;
+  quizQuestion.textContent = question.question;
+  quizFeedback.textContent = '';
+  quizOptions.replaceChildren();
+  quizNext.hidden = true;
+  quizAnswered = false;
+
+  for (const option of shuffled(question.options)) {
+    const button = document.createElement('button');
+    button.className = 'quiz-option';
+    button.type = 'button';
+    button.textContent = option;
+    button.addEventListener('click', () => {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const correct = option === question.answer;
+      if (correct) quizPoints++;
+      for (const answerButton of quizOptions.children) {
+        answerButton.disabled = true;
+        if (answerButton.textContent === question.answer) answerButton.classList.add('correct');
+        else if (answerButton === button) answerButton.classList.add('wrong');
+      }
+      quizScore.textContent = `Skor: ${quizPoints}`;
+      quizFeedback.textContent = `${correct ? 'Benar!' : `Belum tepat. Jawabannya: ${question.answer}.`} ${question.fact}`;
+      quizNext.textContent = quizIndex === quizQuestions.length - 1 ? 'Lihat hasil' : 'Soal berikutnya';
+      quizNext.hidden = false;
+      quizNext.focus();
+    });
+    quizOptions.append(button);
+  }
+}
+
+function startQuiz() {
+  quizQuestions = shuffled(QUIZ_QUESTIONS);
+  quizIndex = 0;
+  quizPoints = 0;
+  quizGame.hidden = false;
+  quizResults.hidden = true;
+  renderQuizQuestion();
+}
+
+function showQuizResults() {
+  quizGame.hidden = true;
+  quizResults.hidden = false;
+  const total = quizQuestions.length;
+  const message = quizPoints === total
+    ? 'Hebat! Kamu mengenal tokoh wayang dengan baik.'
+    : 'Coba lagi untuk menambah pengetahuanmu tentang wayang.';
+  quizResultScore.textContent = `Skor kamu ${quizPoints} dari ${total}. ${message}`;
+  $('quiz-restart').focus();
+}
+
+function closeQuiz() {
+  quizModal.hidden = true;
+  menuToggle.focus();
+}
+
+menuToggle.addEventListener('click', () => {
+  const open = appMenu.hidden;
+  settings.hidden = true;
+  settingsToggle.setAttribute('aria-expanded', 'false');
+  appMenu.hidden = !open;
+  menuToggle.setAttribute('aria-expanded', String(open));
+});
+document.addEventListener('pointerdown', (e) => {
+  if (!appMenu.hidden && !appMenu.contains(e.target) && !menuToggle.contains(e.target)) closeAppMenu();
+});
+$('open-quiz').addEventListener('click', () => {
+  closeAppMenu();
+  quizModal.hidden = false;
+  startQuiz();
+  $('quiz-close').focus();
+});
+$('quiz-close').addEventListener('click', closeQuiz);
+$('quiz-finish').addEventListener('click', closeQuiz);
+$('quiz-restart').addEventListener('click', () => {
+  startQuiz();
+  $('quiz-close').focus();
+});
+$('quiz-next').addEventListener('click', () => {
+  if (quizIndex === quizQuestions.length - 1) {
+    showQuizResults();
+    return;
+  }
+  quizIndex++;
+  renderQuizQuestion();
+  quizOptions.querySelector('button')?.focus();
+});
+quizModal.addEventListener('click', (e) => {
+  if (e.target === quizModal) closeQuiz();
+});
 settingsToggle.addEventListener('click', () => {
+  closeAppMenu();
   settings.hidden = !settings.hidden;
   settingsToggle.setAttribute('aria-expanded', String(!settings.hidden));
 });
@@ -288,6 +452,17 @@ function turnPuppet(i) {
 }
 
 addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    if (!quizModal.hidden) {
+      closeQuiz();
+      return;
+    }
+    if (!appMenu.hidden) {
+      closeAppMenu();
+      return;
+    }
+  }
+  if (!quizModal.hidden) return;
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   const k = e.key.toLowerCase();
   if (k === 'f') turnPuppet(0);
