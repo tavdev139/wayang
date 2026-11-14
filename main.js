@@ -344,6 +344,7 @@ const backgroundInput = $('opt-background');
 for (const background of BACKGROUNDS) backgroundInput.add(new Option(background.label, background.key));
 backgroundInput.value = BACKGROUNDS[0].key;
 backgroundInput.addEventListener('change', (e) => renderer.setBackground(e.target.value));
+$('opt-audience-view').addEventListener('change', (e) => renderer.setAudienceView(e.target.checked));
 $('opt-camera').addEventListener('change', (e) => {
   showPreview = e.target.checked;
   syncPreview();

@@ -373,6 +373,7 @@ export class Renderer {
     this.tex = {};
     this.rt = {};
     this.size = [0, 0];
+    this.audienceView = false;
   }
 
   async loadTexture(key, url) {
@@ -398,6 +399,10 @@ export class Renderer {
     const texture = this.tex[key];
     if (!texture) throw new Error(`Unknown background texture "${key}"`);
     this.tex.background = texture;
+  }
+
+  setAudienceView(enabled) {
+    this.audienceView = enabled;
   }
 
   makeRT(w, h, float) {
@@ -482,7 +487,7 @@ export class Renderer {
     gl.uniform1f(prog.u('uIntensity'), f.intensity);
   }
 
-  drawPart(prog, item, f, proj, lit) {
+  drawPart(prog, item, f, proj, lit, silhouette) {
     const gl = this.gl;
     const t = this.tex[item.key];
     const m = item.m;
@@ -498,7 +503,7 @@ export class Renderer {
       gl.uniform2f(prog.u('uTilt'), ...(item.tilt ?? [0, 0]));
       gl.uniform1f(prog.u('uBump'), 5.5);
     } else {
-      gl.uniform1f(prog.u('uTint'), 0.22);
+      gl.uniform1f(prog.u('uTint'), silhouette ? 0 : 0.22);
     }
     gl.bindVertexArray(this.quadVao);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
@@ -549,7 +554,7 @@ export class Renderer {
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, pts.length * 2);
   }
 
-  drawItems(items, f, proj, lit) {
+  drawItems(items, f, proj, lit, silhouette = false) {
     const gl = this.gl;
     const partProg = lit ? this.p.part : this.p.partShadow;
     const stickProg = lit ? this.p.stick : this.p.stickShadow;
@@ -558,7 +563,7 @@ export class Renderer {
       gl.useProgram(prog.prog);
       if (lit) this.setLight(prog, f);
       gl.uniform1f(prog.u('uAlpha'), item.alpha ?? 1);
-      if (item.kind === 'part') this.drawPart(prog, item, f, proj, lit);
+      if (item.kind === 'part') this.drawPart(prog, item, f, proj, lit, silhouette);
       else this.drawStick(prog, item, f, proj, lit);
     }
   }
@@ -568,27 +573,29 @@ export class Renderer {
     const { rt, p } = this;
     const [W, H] = this.size;
 
-    // 1) shadow silhouettes, projected away from the lamp onto the cloth — one layer per puppet
+    // 1) soft projected shadows are used in puppeteer view; audience view draws crisp silhouettes
     //    (f.layers is back-to-front; at most two shadow layers)
     const layers = f.layers.slice(0, 2);
     const shadowRTs = [rt.shadow0, rt.shadow1];
     const strengths = [0, 0];
-    const pxPerStage = rt.shadow0.w / f.view.w;
-    layers.forEach((layer, i) => {
-      const target = shadowRTs[i];
-      this.bindRT(target);
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-      const proj = [f.lamp[0], f.lamp[1], layer.shadow.scale, layer.shadow.dy];
-      this.drawItems(layer.items, f, proj, false);
-      gl.disable(gl.BLEND);
-      const px = layer.shadow.blur * pxPerStage;
-      this.blur(target, rt.shadowTmp, px);
-      if (px > 6) this.blur(target, rt.shadowTmp, px * 0.5);
-      strengths[i] = layer.shadow.strength;
-    });
+    if (!this.audienceView) {
+      const pxPerStage = rt.shadow0.w / f.view.w;
+      layers.forEach((layer, i) => {
+        const target = shadowRTs[i];
+        this.bindRT(target);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.enable(gl.BLEND);
+        gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+        const proj = [f.lamp[0], f.lamp[1], layer.shadow.scale, layer.shadow.dy];
+        this.drawItems(layer.items, f, proj, false);
+        gl.disable(gl.BLEND);
+        const px = layer.shadow.blur * pxPerStage;
+        this.blur(target, rt.shadowTmp, px);
+        if (px > 6) this.blur(target, rt.shadowTmp, px * 0.5);
+        strengths[i] = layer.shadow.strength;
+      });
+    }
 
     // 2) lit kelir + shadows
     this.bindRT(rt.scene);
@@ -606,10 +613,12 @@ export class Renderer {
     gl.uniform1f(p.bg.u('uTime'), f.time);
     this.fullscreen(p.bg);
 
-    // 3) the puppets and their sticks, lit by the blencong
+    // 3) the puppeteer sees painted puppets; the audience sees their black silhouettes
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    for (const layer of layers) this.drawItems(layer.items, f, [0, 0, 1, 0], true);
+    for (const layer of layers) {
+      this.drawItems(layer.items, f, [0, 0, 1, 0], !this.audienceView, this.audienceView);
+    }
     gl.disable(gl.BLEND);
 
     // 4) bloom from the flame-lit highlights
