@@ -64,6 +64,50 @@ const QUIZ_QUESTIONS = [
     fact: 'Dalam pewayangan, Hanoman dikenal sebagai putra Batara Bayu.',
   },
 ];
+const CHARACTER_PROFILES = {
+  original: {
+    kind: 'Tokoh dasar',
+    aliases: 'Wayang bawaan',
+    traits: 'Figur dasar untuk mencoba gerakan dan mengenal cara memainkan wayang.',
+    family: 'Tidak mewakili tokoh pewayangan tertentu.',
+    story: 'Karakter contoh yang menjadi bagian dari koleksi awal aplikasi.',
+  },
+  arjuna: {
+    kind: 'Pandawa',
+    aliases: 'Janaka, Dananjaya',
+    traits: 'Tenang, cermat, dan tekun berlatih.',
+    family: 'Putra Pandu dan Kunti; salah satu dari lima Pandawa.',
+    story: 'Dikenal sebagai pemanah ulung dan penerima senjata Pasopati.',
+  },
+  'wayang-baru': {
+    kind: 'Ramayana',
+    aliases: 'Anoman',
+    traits: 'Berani, setia, kuat, dan cerdik.',
+    family: 'Putra Dewi Anjani; dalam tradisi wayang Jawa dikaitkan dengan Batara Bayu.',
+    story: 'Membantu Rama mencari Dewi Sinta dan menjadi utusan ke Alengka.',
+  },
+  'wayang-emas': {
+    kind: 'Mahabharata',
+    aliases: 'Gatotkaca, Tetuka',
+    traits: 'Tangguh, berani, dan setia membela Pandawa.',
+    family: 'Putra Werkudara (Bima) dan Dewi Arimbi.',
+    story: 'Dikenal sakti dan dapat terbang; gugur dalam perang Baratayuda.',
+  },
+  werkudara: {
+    kind: 'Pandawa',
+    aliases: 'Bima, Bratasena',
+    traits: 'Kuat, teguh, berani, dan berbicara terus terang.',
+    family: 'Putra Pandu dan Kunti; Pandawa kedua.',
+    story: 'Menjadi tokoh utama dalam kisah pencarian jati diri Dewa Ruci.',
+  },
+  yudistira: {
+    kind: 'Pandawa',
+    aliases: 'Puntadewa',
+    traits: 'Bijaksana, jujur, sabar, dan mengutamakan keadilan.',
+    family: 'Putra sulung Pandu dan Kunti; pemimpin Pandawa.',
+    story: 'Dikenal dengan pusaka Jamus Kalimasada dan menjadi raja setelah Baratayuda.',
+  },
+};
 
 function shuffled(items) {
   const result = [...items];
@@ -203,6 +247,8 @@ const settingsToggle = $('settings-toggle');
 const menuToggle = $('menu-toggle');
 const appMenu = $('app-menu');
 const quizModal = $('quiz-modal');
+const encyclopediaModal = $('encyclopedia-modal');
+const encyclopediaCards = $('encyclopedia-cards');
 const quizGame = $('quiz-game');
 const quizResults = $('quiz-results');
 const quizProgress = $('quiz-progress');
@@ -282,6 +328,58 @@ function closeQuiz() {
   menuToggle.focus();
 }
 
+function addProfileFact(list, label, value) {
+  const row = document.createElement('div');
+  const term = document.createElement('dt');
+  const detail = document.createElement('dd');
+  term.textContent = label;
+  detail.textContent = value;
+  row.append(term, detail);
+  list.append(row);
+}
+
+function renderEncyclopedia() {
+  encyclopediaCards.replaceChildren();
+  for (const character of CHARACTER_LIST) {
+    const profile = CHARACTER_PROFILES[character.id];
+    if (!profile) throw new Error(`Missing encyclopedia profile for "${character.id}"`);
+
+    const card = document.createElement('article');
+    card.className = 'character-card';
+
+    const portrait = document.createElement('img');
+    portrait.className = 'character-portrait';
+    portrait.src = character.body.src;
+    portrait.alt = `Wayang ${character.name}`;
+    portrait.loading = 'lazy';
+
+    const summary = document.createElement('div');
+    summary.className = 'character-card-summary';
+    const kind = document.createElement('span');
+    kind.className = 'character-card-kind';
+    kind.textContent = profile.kind;
+    const name = document.createElement('h3');
+    name.textContent = character.name;
+    const aliases = document.createElement('p');
+    aliases.className = 'character-card-alias';
+    aliases.textContent = `Nama lain: ${profile.aliases}`;
+    summary.append(kind, name, aliases);
+
+    const facts = document.createElement('dl');
+    facts.className = 'character-facts';
+    addProfileFact(facts, 'Watak', profile.traits);
+    addProfileFact(facts, 'Keluarga', profile.family);
+    addProfileFact(facts, 'Kisah', profile.story);
+    card.append(portrait, summary, facts);
+    encyclopediaCards.append(card);
+  }
+}
+
+function closeEncyclopedia() {
+  encyclopediaModal.hidden = true;
+  menuToggle.focus();
+}
+
 menuToggle.addEventListener('click', () => {
   const open = appMenu.hidden;
   settings.hidden = true;
@@ -297,6 +395,16 @@ $('open-quiz').addEventListener('click', () => {
   quizModal.hidden = false;
   startQuiz();
   $('quiz-close').focus();
+});
+$('open-encyclopedia').addEventListener('click', () => {
+  closeAppMenu();
+  renderEncyclopedia();
+  encyclopediaModal.hidden = false;
+  $('encyclopedia-close').focus();
+});
+$('encyclopedia-close').addEventListener('click', closeEncyclopedia);
+encyclopediaModal.addEventListener('click', (e) => {
+  if (e.target === encyclopediaModal) closeEncyclopedia();
 });
 $('quiz-close').addEventListener('click', closeQuiz);
 $('quiz-finish').addEventListener('click', closeQuiz);
@@ -458,12 +566,16 @@ addEventListener('keydown', (e) => {
       closeQuiz();
       return;
     }
+    if (!encyclopediaModal.hidden) {
+      closeEncyclopedia();
+      return;
+    }
     if (!appMenu.hidden) {
       closeAppMenu();
       return;
     }
   }
-  if (!quizModal.hidden) return;
+  if (!quizModal.hidden || !encyclopediaModal.hidden) return;
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   const k = e.key.toLowerCase();
   if (k === 'f') turnPuppet(0);

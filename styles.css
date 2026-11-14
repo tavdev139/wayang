@@ -5,12 +5,34 @@
   --gold-hi: #f2c76b;
   --panel: rgba(22, 13, 7, 0.74);
   --line: rgba(217, 164, 65, 0.28);
+  --scrollbar-track: #21150f;
+  --scrollbar-thumb: #76502d;
+  --scrollbar-thumb-hover: #a9783f;
   --serif: 'Cormorant Garamond', 'Iowan Old Style', Georgia, serif;
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+  scrollbar-width: thin;
+}
 [hidden] { display: none !important; }
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border: 2px solid var(--scrollbar-track);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 
 html, body {
   margin: 0;
@@ -210,11 +232,16 @@ kbd:first-child { margin-left: 0; }
   top: 62px;
   left: 16px;
   width: min(280px, calc(100vw - 32px));
+  max-height: calc(100vh - 78px);
+  overflow-y: auto;
   padding: 12px;
+  display: grid;
+  gap: 8px;
+  align-content: start;
   z-index: 20;
 }
 .menu-heading {
-  margin: 0 6px 8px;
+  margin: 0 6px;
   color: var(--ink-dim);
   font: 600 10px/1.3 var(--sans);
   letter-spacing: 0.1em;
@@ -358,6 +385,90 @@ kbd:first-child { margin-left: 0; }
   cursor: pointer;
 }
 .quiz-close:hover { border-color: rgba(217, 164, 65, 0.6); }
+.encyclopedia-dialog {
+  width: min(940px, calc(100vw - 32px));
+}
+.encyclopedia-intro {
+  margin: -8px 0 16px;
+  color: var(--ink-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.encyclopedia-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.character-card {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-content: start;
+  gap: 10px 12px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 235, 200, 0.035);
+}
+.character-portrait {
+  width: 64px;
+  height: 88px;
+  grid-row: span 1;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: rgba(217, 164, 65, 0.08);
+}
+.character-card-summary {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+}
+.character-card-kind {
+  color: var(--gold-hi);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.character-card h3 {
+  margin: 0;
+  color: var(--ink);
+  font: 600 19px/1.1 var(--serif);
+}
+.character-card-alias {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 10px;
+  line-height: 1.4;
+}
+.character-facts {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(217, 164, 65, 0.16);
+}
+.character-facts > div {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr);
+  gap: 8px;
+}
+.character-facts dt {
+  color: var(--gold-hi);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.character-facts dd {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 11px;
+  line-height: 1.45;
+}
 .quiz-meta {
   display: flex;
   justify-content: space-between;
@@ -501,9 +612,13 @@ body.ui-hidden .settings { opacity: 0; pointer-events: none; }
   .howto li { grid-template-columns: 96px 1fr; }
   .keys { display: none; }
 }
+@media (max-width: 600px) {
+  .encyclopedia-grid { grid-template-columns: 1fr; }
+  .encyclopedia-dialog { padding: 20px; }
+}
 
 @media (max-height: 240px) {
-  .app-menu { top: 60px; padding: 6px; }
+  .app-menu { top: 60px; max-height: calc(100vh - 66px); padding: 6px; gap: 6px; }
   .menu-heading,
   .menu-item-description { display: none; }
   .menu-item {
