@@ -7,7 +7,7 @@ Jalankan dengan server statis apa pun dari folder ini, misalnya `python -m http.
 
 ## Karakter
 
-Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada Wayang original, Arjuna, Hanoman, Gatot Kaca, Werkudara, dan Yudistira.
+Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada Wayang original, Arjuna, Hanoman, Gatot Kaca, Werkudara, Yudistira, Rahwana, dan Dewi Sinta.
 
 - Pilih karakter di **Settings → Left puppet / Right puppet**.
 - Atau lewat alamat: `index.html?left=arjuna&right=original`.
@@ -37,6 +37,9 @@ Semuanya PNG transparan di `assets/`.
    - `body`: `src`, `size`, `anchor` (titik yang dipegang dalang), `shoulder.L/R` (tempat lengan atas dipaku), `stickTop`/`stickFoot` (garis gapit di tengah badan), `ties` (posisi y ikatan gapit).
    - `arms.L` dan `arms.R`: tiap potongan `{ src, size, prox, dist }` (tangan: `{ src, size, prox, grip }`).
    - `rest`: posisi tangan saat santai, sebagai selisih dari bahu (piksel gambar badan).
+   - `armBend` (opsional): arah siku tiap sisi (`-1` atau `1`).
+   - `armsOnTop` (opsional): `true` jika lengan harus digambar di depan badan.
+   - `faceDirection` (opsional): arah wajah pada gambar asli (`-1` ke kiri, `1` ke kanan; bawaan `-1`).
 4. **Selesai.** Tekstur, menu Settings, dan rig membaca daftar ini, jadi tidak ada file lain yang perlu diubah.
    Cek di browser dengan `?left=<id>&right=<id>`: lengan harus menempel di bahu dan ujung tangan ada di ujung tongkat (tuding).
 

@@ -35,7 +35,7 @@ class Arm {
     this.Lf = len(f);
     this.restF = ang(f);
     // Elbows bend outward/downward on both sides.
-    this.bend = side === 'L' ? -1 : 1;
+    this.bend = character.armBend?.[side] ?? (side === 'L' ? -1 : 1);
 
     // Loose riveted joints: under-damped, and the forearm/hand looser than the upper arm, so a snap
     // travels down the arm and the hand whips past and swings back (as in a dalang's sabet).
@@ -83,7 +83,7 @@ export class Puppet {
     this.bodyTarget = [x, y];
     this.tilt = new Spring(0, 60, 0.45);
     this.depth = new Spring(0, 28, 1.0);
-    this.facing = facing; // 1 = as drawn (face looking left), -1 = mirrored
+    this.facing = facing; // 1 = as drawn, -1 = mirrored
     this.flip = { from: facing, to: facing, t: 1 };
     this.flipX = facing;
     // 'manual' | 'walk' (face travel direction) | 'target' (face faceTargetX, e.g. the other puppet)
@@ -210,15 +210,16 @@ export class Puppet {
     this.walkPhase += dt * speed * 0.017;
     const bob = -Math.abs(Math.sin(this.walkPhase)) * clamp(speed / 380, 0, 1) * 9;
 
-    // auto-turn (drawn facing left, so facing === sign(dx) means it has its back to dx)
+    const drawnFaceDirection = this.char.faceDirection ?? -1;
+    // Turn when the character's actual face points away from its travel direction or target.
     let wantTurn = false;
     if (this.dance) {
       // the choreography decides when to turn
     } else if (this.facingMode === 'walk') {
-      wantTurn = speed > 240 && Math.sign(vx) === this.facing;
+      wantTurn = speed > 240 && Math.sign(vx) !== drawnFaceDirection * this.facing;
     } else if (this.facingMode === 'target' && this.faceTargetX !== null) {
       const dx = this.faceTargetX - this.pos.x;
-      wantTurn = Math.abs(dx) > 60 && Math.sign(dx) === this.facing;
+      wantTurn = Math.abs(dx) > 60 && Math.sign(dx) !== drawnFaceDirection * this.facing;
     }
     if (wantTurn) {
       this.turnTimer += dt;
@@ -393,13 +394,10 @@ export class Puppet {
 
     const back = this.flipX >= 0 ? 'R' : 'L';
     const front = back === 'R' ? 'L' : 'R';
-    const items = [
-      ...armItems(back),
-      { kind: 'part', id: 'body', key: this.char.parts.body.key, size: this.char.parts.body.size, m: B, tilt },
-      gapit,
-      ...armItems(front),
-      ...rods,
-    ];
+    const body = { kind: 'part', id: 'body', key: this.char.parts.body.key, size: this.char.parts.body.size, m: B, tilt };
+    const items = this.char.armsOnTop
+      ? [body, gapit, ...armItems(back), ...armItems(front), ...rods]
+      : [...armItems(back), body, gapit, ...armItems(front), ...rods];
     return this.withMotionBlur(items);
   }
 

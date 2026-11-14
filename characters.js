@@ -16,7 +16,10 @@
 //   rest    where each hand hangs when you are not steering it: offsets from its shoulder, in body-image pixels
 //   armDamping optional multiplier for arm spring damping (defaults to 1)
 //   jointDamping optional multiplier for shoulder, elbow, and wrist hinge damping (defaults to armDamping)
+//   armBend optional elbow bend sign for each side: -1 or 1
 //   rigidHand optional flag to make the palm follow the forearm without wrist flex
+//   armsOnTop optional flag to draw both articulated arms over the body image
+//   faceDirection optional direction the unflipped artwork faces on stage: -1 left, 1 right (defaults to -1)
 
 // A pair of arm pieces that are the same art turned 180 degrees (the original puppet draws its right arm that way).
 const rot180 = (p, size) => [size[0] - p[0], size[1] - p[1]];
@@ -100,6 +103,32 @@ const YUDISTIRA_ARMS = {
     upper: { src: 'assets/upper-arm-yudistira-r.png', size: [222, 86], prox: [23, 40], dist: [222, 42] },
     fore: { src: 'assets/forearm-yudistira-r.png', size: [273, 73], prox: [0, 36], dist: [242, 34] },
     hand: { src: 'assets/hand-yudistira-r.png', size: [77, 137], prox: [39, 14], grip: [39, 79] },
+  },
+};
+
+const RAHWANA_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-rahwana-r.png', size: [186, 47], prox: [7, 24], dist: [178, 24] },
+    fore: { src: 'assets/forearm-rahwana-r.png', size: [188, 33], prox: [9, 17], dist: [179, 17] },
+    hand: { src: 'assets/hand-rahwana-r.png', size: [111, 48], prox: [13, 24], grip: [105, 22] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-rahwana-l.png', size: [190, 44], prox: [180, 22], dist: [10, 22] },
+    fore: { src: 'assets/forearm-rahwana-l.png', size: [191, 37], prox: [181, 18], dist: [10, 18] },
+    hand: { src: 'assets/hand-rahwana-l.png', size: [107, 51], prox: [96, 25], grip: [5, 25] },
+  },
+};
+
+const DEWI_SINTA_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-dewi-sinta-l.png', size: [33, 235], prox: [16, 10], dist: [17, 224] },
+    fore: { src: 'assets/forearm-dewi-sinta-l.png', size: [49, 255], prox: [22, 10], dist: [23, 246] },
+    hand: { src: 'assets/hand-dewi-sinta-l.png', size: [60, 134], prox: [24, 10], grip: [35, 131] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-dewi-sinta-r.png', size: [30, 231], prox: [16, 9], dist: [16, 220] },
+    fore: { src: 'assets/forearm-dewi-sinta-r.png', size: [46, 264], prox: [16, 9], dist: [23, 249] },
+    hand: { src: 'assets/hand-dewi-sinta-r.png', size: [59, 133], prox: [25, 10], grip: [34, 130] },
   },
 };
 
@@ -214,6 +243,47 @@ const RAW = [
     armDamping: 1.5,
     jointDamping: 3,
     rest: { L: [-15, 420], R: [15, 420] },
+  },
+  {
+    id: 'rahwana',
+    name: 'Rahwana',
+    scale: 1.24,
+    faceDirection: 1,
+    body: {
+      src: 'assets/body-rahwana.png',
+      size: [601, 1113],
+      anchor: [300, 610],
+      shoulder: { L: [418, 437], R: [44, 420] },
+      stickTop: [300, 310],
+      stickFoot: [300, 1080],
+      ties: [420, 760, 1020],
+    },
+    arms: RAHWANA_ARMS,
+    armDamping: 1.5,
+    jointDamping: 3,
+    armBend: { L: 1, R: -1 },
+    armsOnTop: true,
+    rest: { L: [0, 420], R: [0, 420] },
+  },
+  {
+    id: 'dewi-sinta',
+    name: 'Dewi Sinta',
+    scale: 1.16,
+    body: {
+      src: 'assets/body-dewi-sinta.png',
+      size: [715, 1183],
+      anchor: [357, 690],
+      shoulder: { L: [168, 315], R: [580, 307] },
+      stickTop: [357, 390],
+      stickFoot: [357, 1150],
+      ties: [400, 840, 1080],
+    },
+    arms: DEWI_SINTA_ARMS,
+    armDamping: 1.5,
+    jointDamping: 3,
+    armBend: { L: 1, R: -1 },
+    armsOnTop: true,
+    rest: { L: [-35, 500], R: [5, 500] },
   },
 ];
 

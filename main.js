@@ -63,6 +63,18 @@ const QUIZ_QUESTIONS = [
     answer: 'Batara Bayu',
     fact: 'Dalam pewayangan, Hanoman dikenal sebagai putra Batara Bayu.',
   },
+  {
+    question: 'Siapakah raja Alengka dalam kisah Ramayana?',
+    options: ['Rahwana', 'Sugriwa', 'Wibisana', 'Kumbakarna'],
+    answer: 'Rahwana',
+    fact: 'Rahwana, yang juga dikenal sebagai Dasamuka, adalah raja Alengka.',
+  },
+  {
+    question: 'Siapakah istri Rama dalam kisah Ramayana?',
+    options: ['Dewi Sinta', 'Dewi Anjani', 'Dewi Tara', 'Dewi Arimbi'],
+    answer: 'Dewi Sinta',
+    fact: 'Dewi Sinta adalah istri Rama dan tokoh penting dalam Ramayana.',
+  },
 ];
 const CHARACTER_PROFILES = {
   original: {
@@ -107,6 +119,20 @@ const CHARACTER_PROFILES = {
     family: 'Putra sulung Pandu dan Kunti; pemimpin Pandawa.',
     story: 'Dikenal dengan pusaka Jamus Kalimasada dan menjadi raja setelah Baratayuda.',
   },
+  rahwana: {
+    kind: 'Ramayana',
+    aliases: 'Dasamuka',
+    traits: 'Raja yang sakti dan berwibawa; kisahnya juga menggambarkan keserakahan dan ambisi.',
+    family: 'Raja Alengka; dalam kisah Ramayana ia adalah saudara Kumbakarna dan Wibisana.',
+    story: 'Menculik Dewi Sinta dan menjadi lawan utama Rama dalam kisah Ramayana.',
+  },
+  'dewi-sinta': {
+    kind: 'Ramayana',
+    aliases: 'Sita, Janaki',
+    traits: 'Setia, tabah, dan teguh menjaga kehormatan.',
+    family: 'Istri Rama; dalam sejumlah tradisi dikenal sebagai putri Prabu Janaka.',
+    story: 'Dibawa ke Alengka oleh Rahwana dan kemudian diselamatkan Rama dengan bantuan Hanoman.',
+  },
 };
 
 function shuffled(items) {
@@ -143,16 +169,19 @@ try {
   throw err;
 }
 
-// Two characters facing each other: left one mirrored (looking right), right one as drawn (looking left).
+// Face each other; account for characters whose source artwork faces right instead of left.
 // Which figure each puppet plays comes from characters.js; pick them in Settings, or with ?left=arjuna&right=original.
 const tracker = new HandTracker(video);
 const controller = new Controller(tracker);
 let facingMode = 'target';
 const params = new URLSearchParams(location.search);
 const pick = (name, i) => [params.get(name), DEFAULT_PAIR[i], DEFAULT_CHARACTER].find((id) => CHARACTERS[id]);
+const faceDirection = (character) => character.faceDirection ?? -1;
+const leftCharacter = CHARACTERS[pick('left', 0)];
+const rightCharacter = CHARACTERS[pick('right', 1)];
 const puppets = [
-  new Puppet({ x: 640, facing: -1, character: CHARACTERS[pick('left', 0)] }),
-  new Puppet({ x: 1280, facing: 1, character: CHARACTERS[pick('right', 1)] }),
+  new Puppet({ x: 640, facing: faceDirection(leftCharacter), character: leftCharacter }),
+  new Puppet({ x: 1280, facing: -faceDirection(rightCharacter), character: rightCharacter }),
 ];
 // handy for poking at from devtools
 window.wayang = {
