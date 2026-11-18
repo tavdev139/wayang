@@ -5,8 +5,7 @@
 //
 //   id      unique key; also namespaces the GPU textures, so two characters never share a texture
 //   name    shown in the settings menu
-//   scale   stage pixels per body-image pixel, relative to the original puppet. The original is 1; a smaller
-//           source image gets a bigger number so every puppet stands about the same height on the kelir
+//   scale   stage pixels per body-image pixel, tuned around a standard body height of about 1377 px
 //   body    { src, size, anchor, shoulder:{L,R}, stickTop, stickFoot, ties }       (all in body-image pixels)
 //             anchor     the point the dalang holds (the puppet's position follows it)
 //             shoulder   where each upper arm is riveted on; "L" is the arm on the side the face looks toward
@@ -20,21 +19,6 @@
 //   rigidHand optional flag to make the palm follow the forearm without wrist flex
 //   armsOnTop optional flag to draw both articulated arms over the body image
 //   faceDirection optional direction the unflipped artwork faces on stage: -1 left, 1 right (defaults to -1)
-
-// A pair of arm pieces that are the same art turned 180 degrees (the original puppet draws its right arm that way).
-const rot180 = (p, size) => [size[0] - p[0], size[1] - p[1]];
-const turned = (piece, src) => {
-  const out = { src, size: piece.size };
-  for (const k of ['prox', 'dist', 'grip']) if (piece[k]) out[k] = rot180(piece[k], piece.size);
-  return out;
-};
-
-// ---- Wayang original: a T-pose figure, arms are broad ornamented pieces (right = left turned 180 degrees) ----
-const ORIGINAL_LEFT = {
-  upper: { src: 'assets/upper-arm-l.png', size: [231, 89], prox: [211, 44], dist: [22, 28] },
-  fore: { src: 'assets/forearm-l.png', size: [195, 109], prox: [172, 58], dist: [13, 53] },
-  hand: { src: 'assets/hand-l.png', size: [108, 124], prox: [91.7, 67.5], grip: [52, 76] },
-};
 
 // ---- Arjuna: arms hang straight down from the ends of the shoulder bar, so each side has its own art ----
 // Pivots were measured from the alpha of the cut-out pieces (run `python measure_pieces.py` on new ones). The upper arm's rivet sits 4 px
@@ -71,7 +55,7 @@ const WAYANG_EMAS_ARMS = {
   L: {
     upper: { src: 'assets/upper-arm-wayang-emas-l.png', size: [129, 258], prox: [96, 19], dist: [80, 239] },
     fore: { src: 'assets/forearm-wayang-emas-l.png', size: [62, 257], prox: [31, 17], dist: [31, 240] },
-    hand: { src: 'assets/hand-wayang-emas-l.png', size: [251, 126], prox: [27, 55], grip: [27, 55] },
+    hand: { src: 'assets/hand-wayang-emas-l-flipped.png', size: [251, 126], prox: [223, 55], grip: [223, 55] },
   },
   R: {
     upper: { src: 'assets/upper-arm-wayang-emas-r.png', size: [103, 266], prox: [43, 19], dist: [41, 247] },
@@ -132,34 +116,38 @@ const DEWI_SINTA_ARMS = {
   },
 };
 
-const RAW = [
-  {
-    id: 'original',
-    name: 'Wayang original',
-    scale: 1,
-    body: {
-      src: 'assets/body.png',
-      size: [706, 1377],
-      anchor: [345, 760],
-      shoulder: { L: [247.5, 432.5], R: [442.5, 432.5] },
-      stickTop: [346, 318],
-      stickFoot: [346, 1334],
-      ties: [470, 1010, 1262],
-    },
-    arms: {
-      L: ORIGINAL_LEFT,
-      R: {
-        upper: turned(ORIGINAL_LEFT.upper, 'assets/upper-arm-r.png'),
-        fore: turned(ORIGINAL_LEFT.fore, 'assets/forearm-r.png'),
-        hand: turned(ORIGINAL_LEFT.hand, 'assets/hand-r.png'),
-      },
-    },
-    rest: { L: [-150, 250], R: [70, 330] },
+// Semar: pivots are measured from the rivet holes in the user's cut-parts photo.
+const SEMAR_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-semar-l.png', size: [161, 218], prox: [142.1, 17.7], dist: [40, 196.3] },
+    fore: { src: 'assets/forearm-semar-l.png', size: [60, 233], prox: [29.7, 19.7], dist: [31.3, 224.6] },
+    hand: { src: 'assets/hand-semar-l.png', size: [139, 159], prox: [68.6, 25.2], grip: [66.8, 83.8] },
   },
+  R: {
+    upper: { src: 'assets/upper-arm-semar-r.png', size: [180, 66], prox: [14.4, 36.8], dist: [165, 28.1] },
+    fore: { src: 'assets/forearm-semar-r.png', size: [151, 174], prox: [138, 170], dist: [76.8, 53.9] },
+    hand: { src: 'assets/hand-semar-r.png', size: [104, 116], prox: [15.6, 106.9], grip: [89.7, 13] },
+  },
+};
+
+const PETRUK_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-petruk-l.png', size: [339, 55], prox: [312, 23.5], dist: [23.8, 29.8] },
+    fore: { src: 'assets/forearm-petruk-l.png', size: [109, 284], prox: [21.7, 22], dist: [82, 259.8] },
+    hand: { src: 'assets/hand-petruk-l.png', size: [66, 215], prox: [33.1, 17.7], grip: [34, 118] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-petruk-r.png', size: [345, 61], prox: [24.7, 31], dist: [321.6, 23] },
+    fore: { src: 'assets/forearm-petruk-r.png', size: [48, 268], prox: [25.4, 20.3], dist: [26.6, 245.4] },
+    hand: { src: 'assets/hand-petruk-r.png', size: [97, 192], prox: [66, 12], grip: [56, 109] },
+  },
+};
+
+const RAW = [
   {
     id: 'arjuna',
     name: 'Arjuna',
-    scale: 2.55, // 482 px tall source -> stands as tall as the 1377 px original
+    scale: 2.55, // 482 px tall source -> stands close to the 1377 px standard
     body: {
       src: 'assets/body-arjuna.png',
       size: [262, 482],
@@ -285,6 +273,48 @@ const RAW = [
     armsOnTop: true,
     rest: { L: [-35, 500], R: [5, 500] },
   },
+  {
+    id: 'semar',
+    name: 'Semar',
+    scale: 1.59,
+    body: {
+      src: 'assets/body-semar.png',
+      size: [642, 866],
+      anchor: [321, 505],
+      shoulder: { L: [256, 315], R: [323, 302] },
+      stickTop: [321, 264],
+      stickFoot: [321, 852],
+      ties: [350, 660, 820],
+    },
+    arms: SEMAR_ARMS,
+    armDamping: 1.5,
+    jointDamping: 2.8,
+    armsOnTop: true,
+    rigidHand: true,
+    armBend: { L: -1, R: 1 },
+    rest: { L: [-90, 420], R: [162, 6] },
+  },
+  {
+    id: 'petruk',
+    name: 'Petruk',
+    scale: 1,
+    body: {
+      src: 'assets/body-petruk.png',
+      size: [605, 1377],
+      anchor: [300, 760],
+      shoulder: { L: [222, 470], R: [422, 465] },
+      stickTop: [300, 390],
+      stickFoot: [300, 1355],
+      ties: [500, 960, 1270],
+    },
+    arms: PETRUK_ARMS,
+    armDamping: 1.5,
+    jointDamping: 3,
+    armsOnTop: true,
+    rigidHand: true,
+    armBend: { L: -1, R: 1 },
+    rest: { L: [-500, 330], R: [500, 330] },
+  },
 ];
 
 // Parts get a texture key of the form "<id>/<part>"; Arm and Puppet read the same names ("upperL", "handR", ...).
@@ -299,9 +329,9 @@ function finalize(c) {
 
 export const CHARACTERS = Object.fromEntries(RAW.map((c) => [c.id, finalize(c)]));
 export const CHARACTER_LIST = Object.values(CHARACTERS);
-export const DEFAULT_CHARACTER = 'original';
+export const DEFAULT_CHARACTER = 'arjuna';
 // who stands on the kelir at start: [left puppet, right puppet]; a name that isn't in CHARACTERS falls back to DEFAULT_CHARACTER
-export const DEFAULT_PAIR = ['original', 'arjuna'];
+export const DEFAULT_PAIR = ['arjuna', 'wayang-baru'];
 
 // [textureKey, url] for everything the renderer must load
 export function characterTextures(chars = CHARACTER_LIST) {

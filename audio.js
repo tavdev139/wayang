@@ -1,6 +1,5 @@
-// Beat clock for the dance (wirama). The gamelan changes tempo (irama) through the track, so instead of a fixed
-// BPM we follow a beat grid precomputed from the recording (assets/backsound-beats.json) against the audio's
-// playback position. Without music playing it falls back to a steady pulse.
+// Beat clock for the dance (wirama). Tracks with a precomputed beat grid follow its playback position;
+// tracks without one, or without music playing, use a steady pulse.
 export class BeatClock {
   constructor(audioEl, fallbackPeriod = 0.68) {
     this.el = audioEl;
@@ -97,6 +96,7 @@ export class BackgroundMusic {
     this.started = false;
     this.fadeRaf = 0;
     this.trackVersion = 0;
+    this.duck = 1;
     const saved = this.load();
     this.volume = saved.volume ?? 0.6;
     this.muted = saved.muted ?? false;
@@ -119,7 +119,14 @@ export class BackgroundMusic {
   }
 
   get target() {
-    return this.muted ? 0 : this.volume;
+    return this.muted ? 0 : this.volume * this.duck;
+  }
+
+  setDuck(value, seconds = 0.5) {
+    const duck = Math.min(1, Math.max(0, value));
+    if (duck === this.duck) return;
+    this.duck = duck;
+    if (this.started && !this.muted) this.fadeTo(this.target, seconds);
   }
 
   fadeTo(value, seconds) {
@@ -213,7 +220,7 @@ export class BackgroundMusic {
     this.save();
     if (this.started && !this.muted) {
       cancelAnimationFrame(this.fadeRaf);
-      this.el.volume = v;
+      this.el.volume = this.target;
     }
   }
 }

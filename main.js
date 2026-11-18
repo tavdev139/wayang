@@ -5,8 +5,11 @@ import { HandTracker } from './tracking.js';
 import { Controller } from './controller.js';
 import { BackgroundMusic, BeatClock } from './audio.js';
 import { clamp, noise1 } from './math.js';
+import { STORIES, storyInputs } from './stories.js';
+import { applyTranslations, getLanguage, setLanguage, t } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
+applyTranslations();
 const canvas = $('stage');
 const video = $('video');
 const preview = $('preview');
@@ -14,17 +17,15 @@ const previewBox = $('preview-box');
 const pctx = preview.getContext('2d');
 
 const BACKGROUNDS = [
-  { label: 'Background satu', key: 'background', src: 'assets/background.png' },
-  { label: 'Background dua', key: 'background-2', src: 'assets/background-2.png' },
-  { label: 'Background tiga', key: 'background-3', src: 'assets/background-3.png' },
-  { label: 'Background empat', key: 'background-4', src: 'assets/background-4.png' },
-  { label: 'Background lima', key: 'background-5', src: 'assets/background-5.jpg' },
+  { label: 'background.one', key: 'background-2', src: 'assets/background-2.png' },
+  { label: 'background.two', key: 'background-3', src: 'assets/background-3.png' },
+  { label: 'background.three', key: 'background-4', src: 'assets/background-4.png' },
+  { label: 'background.four', key: 'background-5', src: 'assets/background-5.jpg' },
 ];
 const MUSIC_TRACKS = [
-  { id: 'music-1', label: 'Musik satu', src: 'assets/backsound.mp3', beats: 'assets/backsound-beats.json' },
-  { id: 'music-2', label: 'Musik dua', src: 'assets/music-2.mp3' },
-  { id: 'music-3', label: 'Musik tiga', src: 'assets/music-3.mp3' },
-  { id: 'music-4', label: 'Musik empat', src: 'assets/music-4.mp3' },
+  { id: 'music-1', label: 'music.one', src: 'assets/music-2.mp3' },
+  { id: 'music-2', label: 'music.two', src: 'assets/music-3.mp3' },
+  { id: 'music-3', label: 'music.three', src: 'assets/music-4.mp3' },
 ];
 const QUIZ_QUESTIONS = [
   {
@@ -76,20 +77,69 @@ const QUIZ_QUESTIONS = [
     fact: 'Dewi Sinta adalah istri Rama dan tokoh penting dalam Ramayana.',
   },
 ];
-const CHARACTER_PROFILES = {
-  original: {
-    kind: 'Tokoh dasar',
-    aliases: 'Wayang bawaan',
-    traits: 'Figur dasar untuk mencoba gerakan dan mengenal cara memainkan wayang.',
-    family: 'Tidak mewakili tokoh pewayangan tertentu.',
-    story: 'Karakter contoh yang menjadi bagian dari koleksi awal aplikasi.',
+const QUIZ_QUESTIONS_EN = [
+  {
+    question: 'Which Pandawa is known as a master archer?',
+    options: ['Arjuna', 'Werkudara', 'Yudistira', 'Hanoman'],
+    answer: 'Arjuna',
+    fact: 'Arjuna is known as the Pandawa skilled in archery.',
   },
+  {
+    question: 'What is another name for Werkudara?',
+    options: ['Bima', 'Nakula', 'Arjuna', 'Gatot Kaca'],
+    answer: 'Bima',
+    fact: 'Bima is also known as Werkudara.',
+  },
+  {
+    question: 'Who is the eldest of the Pandawa?',
+    options: ['Yudistira', 'Arjuna', 'Sadewa', 'Werkudara'],
+    answer: 'Yudistira',
+    fact: 'Yudistira is the eldest of the Pandawa brothers.',
+  },
+  {
+    question: 'Who are Gatot Kaca’s parents?',
+    options: ['Bima and Arimbi', 'Arjuna and Subadra', 'Yudistira and Drupadi', 'Nakula and Sembadra'],
+    answer: 'Bima and Arimbi',
+    fact: 'In Javanese wayang stories, Gatot Kaca is the son of Bima and Arimbi.',
+  },
+  {
+    question: 'Which white monkey helped Rama search for Sinta?',
+    options: ['Hanoman', 'Gareng', 'Werkudara', 'Gatot Kaca'],
+    answer: 'Hanoman',
+    fact: 'Hanoman helped Rama search for Dewi Sinta.',
+  },
+  {
+    question: 'In wayang tradition, who is Hanoman’s father?',
+    options: ['Batara Bayu', 'Batara Guru', 'Batara Surya', 'Batara Indra'],
+    answer: 'Batara Bayu',
+    fact: 'In wayang tradition, Hanoman is known as the son of Batara Bayu.',
+  },
+  {
+    question: 'Who is the king of Alengka in the Ramayana?',
+    options: ['Rahwana', 'Sugriwa', 'Wibisana', 'Kumbakarna'],
+    answer: 'Rahwana',
+    fact: 'Rahwana, also known as Dasamuka, is the king of Alengka.',
+  },
+  {
+    question: 'Who is Rama’s wife in the Ramayana?',
+    options: ['Dewi Sinta', 'Dewi Anjani', 'Dewi Tara', 'Dewi Arimbi'],
+    answer: 'Dewi Sinta',
+    fact: 'Dewi Sinta is Rama’s wife and a central character in the Ramayana.',
+  },
+];
+const CHARACTER_PROFILES = {
   arjuna: {
     kind: 'Pandawa',
     aliases: 'Janaka, Dananjaya',
     traits: 'Tenang, cermat, dan tekun berlatih.',
     family: 'Putra Pandu dan Kunti; salah satu dari lima Pandawa.',
     story: 'Dikenal sebagai pemanah ulung dan penerima senjata Pasopati.',
+    en: {
+      kind: 'Pandawa',
+      traits: 'Calm, precise, and dedicated to practice.',
+      family: 'Son of Pandu and Kunti; one of the five Pandawa brothers.',
+      story: 'Known as a master archer and wielder of the Pasopati weapon.',
+    },
   },
   'wayang-baru': {
     kind: 'Ramayana',
@@ -97,6 +147,12 @@ const CHARACTER_PROFILES = {
     traits: 'Berani, setia, kuat, dan cerdik.',
     family: 'Putra Dewi Anjani; dalam tradisi wayang Jawa dikaitkan dengan Batara Bayu.',
     story: 'Membantu Rama mencari Dewi Sinta dan menjadi utusan ke Alengka.',
+    en: {
+      kind: 'Ramayana',
+      traits: 'Brave, loyal, strong, and clever.',
+      family: 'Son of Dewi Anjani; associated with Batara Bayu in Javanese wayang tradition.',
+      story: 'Helps Rama search for Dewi Sinta and serves as a messenger to Alengka.',
+    },
   },
   'wayang-emas': {
     kind: 'Mahabharata',
@@ -104,6 +160,12 @@ const CHARACTER_PROFILES = {
     traits: 'Tangguh, berani, dan setia membela Pandawa.',
     family: 'Putra Werkudara (Bima) dan Dewi Arimbi.',
     story: 'Dikenal sakti dan dapat terbang; gugur dalam perang Baratayuda.',
+    en: {
+      kind: 'Mahabharata',
+      traits: 'Strong, courageous, and loyal to the Pandawa.',
+      family: 'Son of Werkudara (Bima) and Dewi Arimbi.',
+      story: 'Known for his great strength and ability to fly; falls in the Baratayuda war.',
+    },
   },
   werkudara: {
     kind: 'Pandawa',
@@ -111,6 +173,12 @@ const CHARACTER_PROFILES = {
     traits: 'Kuat, teguh, berani, dan berbicara terus terang.',
     family: 'Putra Pandu dan Kunti; Pandawa kedua.',
     story: 'Menjadi tokoh utama dalam kisah pencarian jati diri Dewa Ruci.',
+    en: {
+      kind: 'Pandawa',
+      traits: 'Strong, steadfast, brave, and outspoken.',
+      family: 'Son of Pandu and Kunti; the second Pandawa brother.',
+      story: 'A central figure in the story of Dewa Ruci and the search for self-knowledge.',
+    },
   },
   yudistira: {
     kind: 'Pandawa',
@@ -118,6 +186,12 @@ const CHARACTER_PROFILES = {
     traits: 'Bijaksana, jujur, sabar, dan mengutamakan keadilan.',
     family: 'Putra sulung Pandu dan Kunti; pemimpin Pandawa.',
     story: 'Dikenal dengan pusaka Jamus Kalimasada dan menjadi raja setelah Baratayuda.',
+    en: {
+      kind: 'Pandawa',
+      traits: 'Wise, honest, patient, and committed to justice.',
+      family: 'Eldest child of Pandu and Kunti; leader of the Pandawa.',
+      story: 'Known for the Jamus Kalimasada heirloom and becomes king after the Baratayuda war.',
+    },
   },
   rahwana: {
     kind: 'Ramayana',
@@ -125,6 +199,12 @@ const CHARACTER_PROFILES = {
     traits: 'Raja yang sakti dan berwibawa; kisahnya juga menggambarkan keserakahan dan ambisi.',
     family: 'Raja Alengka; dalam kisah Ramayana ia adalah saudara Kumbakarna dan Wibisana.',
     story: 'Menculik Dewi Sinta dan menjadi lawan utama Rama dalam kisah Ramayana.',
+    en: {
+      kind: 'Ramayana',
+      traits: 'A powerful and commanding king whose story also reflects greed and ambition.',
+      family: 'King of Alengka and, in the Ramayana, brother of Kumbakarna and Wibisana.',
+      story: 'Kidnaps Dewi Sinta and becomes Rama’s principal adversary in the Ramayana.',
+    },
   },
   'dewi-sinta': {
     kind: 'Ramayana',
@@ -132,6 +212,38 @@ const CHARACTER_PROFILES = {
     traits: 'Setia, tabah, dan teguh menjaga kehormatan.',
     family: 'Istri Rama; dalam sejumlah tradisi dikenal sebagai putri Prabu Janaka.',
     story: 'Dibawa ke Alengka oleh Rahwana dan kemudian diselamatkan Rama dengan bantuan Hanoman.',
+    en: {
+      kind: 'Ramayana',
+      traits: 'Loyal, resilient, and steadfast in protecting her dignity.',
+      family: 'Rama’s wife; in some traditions, the daughter of King Janaka.',
+      story: 'Taken to Alengka by Rahwana and later rescued by Rama with Hanoman’s help.',
+    },
+  },
+  semar: {
+    kind: 'Punakawan',
+    aliases: 'Ki Lurah Semar',
+    traits: 'Bijaksana, rendah hati, dan setia mendampingi para ksatria.',
+    family: 'Punakawan; dalam tradisi Jawa, Semar dipandang sebagai penjelmaan Batara Ismaya.',
+    story: 'Menjadi pengasuh dan penasihat Pandawa dalam berbagai kisah pewayangan.',
+    en: {
+      kind: 'Punakawan',
+      traits: 'Wise, humble, and devoted to guiding the knights.',
+      family: 'One of the Punakawan; in Javanese tradition, an incarnation of Batara Ismaya.',
+      story: 'Serves as guardian and adviser to the Pandawa in many wayang stories.',
+    },
+  },
+  petruk: {
+    kind: 'Punakawan',
+    aliases: 'Ki Lurah Petruk',
+    traits: 'Cerdik, jenaka, dan berani menyampaikan kritik.',
+    family: 'Salah satu Punakawan; dalam tradisi wayang Jawa ia dikenal sebagai anak Semar.',
+    story: 'Menghibur sekaligus menyampaikan nasihat melalui humor dalam pertunjukan wayang.',
+    en: {
+      kind: 'Punakawan',
+      traits: 'Clever, humorous, and bold in speaking his mind.',
+      family: 'One of the Punakawan; in Javanese wayang tradition, he is known as Semar’s son.',
+      story: 'Uses humor in wayang performances to entertain and offer advice.',
+    },
   },
 };
 
@@ -163,14 +275,15 @@ try {
     // every character in characters.js, each under its own "<id>/<part>" key
     ...characterTextures().map(([key, src]) => renderer.loadTexture(key, src)),
   ]);
+  renderer.setBackground(BACKGROUNDS[0].key);
 } catch (err) {
   console.error(err);
-  fail(`Could not start the renderer: ${err.message}`);
+  fail(t('toast.renderer-error', { message: err.message }));
   throw err;
 }
 
 // Face each other; account for characters whose source artwork faces right instead of left.
-// Which figure each puppet plays comes from characters.js; pick them in Settings, or with ?left=arjuna&right=original.
+// Which figure each puppet plays comes from characters.js; pick them in Settings, or with ?left=arjuna&right=wayang-baru.
 const tracker = new HandTracker(video);
 const controller = new Controller(tracker);
 let facingMode = 'target';
@@ -233,21 +346,27 @@ startBtn.addEventListener('click', async () => {
   startBtn.disabled = true;
   introStatus.classList.remove('err');
   try {
-    await tracker.start((msg) => (introStatus.textContent = msg));
+    await tracker.start((msg) => {
+      const statusKeys = {
+        'Requesting camera…': 'toast.camera.request',
+        'Loading hand-tracking model…': 'toast.camera.loading',
+      };
+      introStatus.textContent = statusKeys[msg] ? t(statusKeys[msg]) : msg;
+    });
     controller.source = 'camera';
     controller.recalibrate();
     introStatus.textContent = '';
     intro.classList.add('gone');
+    showChromeForActivity();
     preview.height = Math.round(preview.width / tracker.aspect);
     preview.style.aspectRatio = `${preview.width} / ${preview.height}`;
     syncPreview();
   } catch (err) {
     console.error(err);
     introStatus.classList.add('err');
-    introStatus.textContent =
-      err?.name === 'NotAllowedError'
-        ? 'Camera permission was blocked. Allow it in the address bar, or play with the mouse.'
-        : `Camera unavailable (${err?.message || err}). You can still play with the mouse.`;
+    introStatus.textContent = err?.name === 'NotAllowedError'
+      ? t('toast.camera-denied')
+      : t('toast.camera-error', { message: err?.message || err });
     startBtn.disabled = false;
   }
 });
@@ -255,6 +374,7 @@ startBtn.addEventListener('click', async () => {
 $('use-mouse').addEventListener('click', () => {
   controller.source = 'mouse';
   intro.classList.add('gone');
+  showChromeForActivity();
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -273,11 +393,18 @@ canvas.addEventListener(
 
 const settings = $('settings');
 const settingsToggle = $('settings-toggle');
+const languagePicker = $('language-picker');
+const languageToggle = $('language-toggle');
+const languageMenu = $('language-menu');
 const menuToggle = $('menu-toggle');
 const appMenu = $('app-menu');
 const quizModal = $('quiz-modal');
 const encyclopediaModal = $('encyclopedia-modal');
 const encyclopediaCards = $('encyclopedia-cards');
+const storyModal = $('story-modal');
+const storyList = $('story-list');
+const storyPlayback = $('story-playback');
+const storyCaption = $('story-caption');
 const quizGame = $('quiz-game');
 const quizResults = $('quiz-results');
 const quizProgress = $('quiz-progress');
@@ -291,64 +418,124 @@ let quizQuestions = [];
 let quizIndex = 0;
 let quizPoints = 0;
 let quizAnswered = false;
+let quizSelectedOptionIndex = -1;
+let storyState = null;
+const storyAudio = $('story-narration');
+storyAudio.preload = 'auto';
+let storyAudioToken = 0;
+let chromeHideTimer = 0;
+const CHROME_HIDE_DELAY = 3200;
+
+function showChromeForActivity() {
+  clearTimeout(chromeHideTimer);
+  document.body.classList.remove('chrome-hidden');
+  if (!storyState && controller.source !== 'camera') return;
+
+  chromeHideTimer = setTimeout(() => {
+    const overlayOpen =
+      !settings.hidden ||
+      !appMenu.hidden ||
+      !quizModal.hidden ||
+      !encyclopediaModal.hidden ||
+      !storyModal.hidden;
+    if (!overlayOpen) document.body.classList.add('chrome-hidden');
+  }, CHROME_HIDE_DELAY);
+}
+
+document.addEventListener('pointermove', showChromeForActivity, { passive: true });
+document.addEventListener('pointerdown', showChromeForActivity, { passive: true });
+document.addEventListener('keydown', showChromeForActivity);
+document.addEventListener('focusin', showChromeForActivity);
 
 function closeAppMenu() {
   appMenu.hidden = true;
   menuToggle.setAttribute('aria-expanded', 'false');
 }
 
+function syncLanguagePicker() {
+  const language = getLanguage();
+  $('language-flag').textContent = language === 'en' ? '🇬🇧' : '🇮🇩';
+  languageMenu.querySelectorAll('[data-language]').forEach((option) => {
+    option.setAttribute('aria-pressed', String(option.dataset.language === language));
+  });
+}
+
 function renderQuizQuestion() {
   const question = quizQuestions[quizIndex];
-  quizProgress.textContent = `Soal ${quizIndex + 1} dari ${quizQuestions.length}`;
-  quizScore.textContent = `Skor: ${quizPoints}`;
+  const answerIndex = question.options.indexOf(question.answer);
+  quizProgress.textContent = t('quiz.progress', { current: quizIndex + 1, total: quizQuestions.length });
+  quizScore.textContent = t('quiz.score', { score: quizPoints });
   quizQuestion.textContent = question.question;
-  quizFeedback.textContent = '';
+  quizFeedback.textContent = quizAnswered ? quizFeedbackText(question, answerIndex) : '';
   quizOptions.replaceChildren();
-  quizNext.hidden = true;
-  quizAnswered = false;
+  quizNext.hidden = !quizAnswered;
+  quizNext.textContent = quizIndex === quizQuestions.length - 1 ? t('quiz.results') : t('quiz.next');
 
-  for (const option of shuffled(question.options)) {
+  for (const { option, optionIndex } of shuffled(question.options.map((option, optionIndex) => ({ option, optionIndex })))) {
     const button = document.createElement('button');
     button.className = 'quiz-option';
     button.type = 'button';
     button.textContent = option;
+    button.disabled = quizAnswered;
+    if (quizAnswered && optionIndex === answerIndex) button.classList.add('correct');
+    else if (quizAnswered && optionIndex === quizSelectedOptionIndex) button.classList.add('wrong');
     button.addEventListener('click', () => {
       if (quizAnswered) return;
       quizAnswered = true;
-      const correct = option === question.answer;
+      quizSelectedOptionIndex = optionIndex;
+      const correct = optionIndex === answerIndex;
       if (correct) quizPoints++;
       for (const answerButton of quizOptions.children) {
         answerButton.disabled = true;
-        if (answerButton.textContent === question.answer) answerButton.classList.add('correct');
+        const answerButtonIndex = Number(answerButton.dataset.optionIndex);
+        if (answerButtonIndex === answerIndex) answerButton.classList.add('correct');
         else if (answerButton === button) answerButton.classList.add('wrong');
       }
-      quizScore.textContent = `Skor: ${quizPoints}`;
-      quizFeedback.textContent = `${correct ? 'Benar!' : `Belum tepat. Jawabannya: ${question.answer}.`} ${question.fact}`;
-      quizNext.textContent = quizIndex === quizQuestions.length - 1 ? 'Lihat hasil' : 'Soal berikutnya';
+      quizScore.textContent = t('quiz.score', { score: quizPoints });
+      quizFeedback.textContent = quizFeedbackText(question, answerIndex);
+      quizNext.textContent = quizIndex === quizQuestions.length - 1 ? t('quiz.results') : t('quiz.next');
       quizNext.hidden = false;
       quizNext.focus();
     });
+    button.dataset.optionIndex = String(optionIndex);
     quizOptions.append(button);
   }
 }
 
+function quizFeedbackText(question, answerIndex) {
+  const correct = quizSelectedOptionIndex === answerIndex;
+  const result = correct ? t('quiz.correct') : t('quiz.incorrect', { answer: question.options[answerIndex] });
+  return `${result} ${question.fact}`;
+}
+
+function localizeQuizQuestion(index) {
+  const english = getLanguage() === 'en' ? QUIZ_QUESTIONS_EN[index] : {};
+  return { ...QUIZ_QUESTIONS[index], ...english, sourceIndex: index };
+}
+
 function startQuiz() {
-  quizQuestions = shuffled(QUIZ_QUESTIONS);
+  quizQuestions = shuffled(QUIZ_QUESTIONS.map((_question, index) => localizeQuizQuestion(index)));
   quizIndex = 0;
   quizPoints = 0;
+  quizAnswered = false;
+  quizSelectedOptionIndex = -1;
   quizGame.hidden = false;
   quizResults.hidden = true;
   renderQuizQuestion();
 }
 
+function renderQuizResultsText() {
+  const total = quizQuestions.length;
+  const message = quizPoints === total
+    ? t('quiz.perfect')
+    : t('quiz.try-again');
+  quizResultScore.textContent = t('quiz.result-score', { score: quizPoints, total, message });
+}
+
 function showQuizResults() {
   quizGame.hidden = true;
   quizResults.hidden = false;
-  const total = quizQuestions.length;
-  const message = quizPoints === total
-    ? 'Hebat! Kamu mengenal tokoh wayang dengan baik.'
-    : 'Coba lagi untuk menambah pengetahuanmu tentang wayang.';
-  quizResultScore.textContent = `Skor kamu ${quizPoints} dari ${total}. ${message}`;
+  renderQuizResultsText();
   $('quiz-restart').focus();
 }
 
@@ -370,8 +557,9 @@ function addProfileFact(list, label, value) {
 function renderEncyclopedia() {
   encyclopediaCards.replaceChildren();
   for (const character of CHARACTER_LIST) {
-    const profile = CHARACTER_PROFILES[character.id];
-    if (!profile) throw new Error(`Missing encyclopedia profile for "${character.id}"`);
+    const sourceProfile = CHARACTER_PROFILES[character.id];
+    if (!sourceProfile) throw new Error(`Missing encyclopedia profile for "${character.id}"`);
+    const profile = getLanguage() === 'en' ? { ...sourceProfile, ...sourceProfile.en } : sourceProfile;
 
     const card = document.createElement('article');
     card.className = 'character-card';
@@ -379,7 +567,7 @@ function renderEncyclopedia() {
     const portrait = document.createElement('img');
     portrait.className = 'character-portrait';
     portrait.src = character.body.src;
-    portrait.alt = `Wayang ${character.name}`;
+    portrait.alt = t('encyclopedia.portrait', { name: character.name });
     portrait.loading = 'lazy';
 
     const summary = document.createElement('div');
@@ -391,14 +579,14 @@ function renderEncyclopedia() {
     name.textContent = character.name;
     const aliases = document.createElement('p');
     aliases.className = 'character-card-alias';
-    aliases.textContent = `Nama lain: ${profile.aliases}`;
+    aliases.textContent = t('encyclopedia.aliases', { aliases: profile.aliases });
     summary.append(kind, name, aliases);
 
     const facts = document.createElement('dl');
     facts.className = 'character-facts';
-    addProfileFact(facts, 'Watak', profile.traits);
-    addProfileFact(facts, 'Keluarga', profile.family);
-    addProfileFact(facts, 'Kisah', profile.story);
+    addProfileFact(facts, t('encyclopedia.traits'), profile.traits);
+    addProfileFact(facts, t('encyclopedia.family'), profile.family);
+    addProfileFact(facts, t('encyclopedia.story'), profile.story);
     card.append(portrait, summary, facts);
     encyclopediaCards.append(card);
   }
@@ -409,8 +597,331 @@ function closeEncyclopedia() {
   menuToggle.focus();
 }
 
+function storyLineAt(story, index) {
+  let offset = 0;
+  for (let sceneIndex = 0; sceneIndex < story.scenes.length; sceneIndex++) {
+    const scene = story.scenes[sceneIndex];
+    if (index < offset + scene.lines.length) {
+      const sceneLineIndex = index - offset;
+      const line = scene.lines[sceneLineIndex];
+      const nextLine = scene.lines[sceneLineIndex + 1];
+      return {
+        scene,
+        sceneIndex,
+        sceneLineIndex,
+        line,
+        duration: (nextLine?.at ?? scene.duration) - line.at,
+      };
+    }
+    offset += scene.lines.length;
+  }
+  throw new RangeError(`Story line ${index} is out of range for "${story.id}"`);
+}
+
+function playStoryAudio(token) {
+  const playback = storyAudio.play();
+  if (!playback) return;
+  playback.catch((error) => {
+    if (!storyState || token !== storyAudioToken || error.name === 'AbortError') return;
+    storyState.paused = true;
+    music.setDuck(1);
+    renderStoryPlayback();
+    showToast(t('toast.narration-error'));
+    console.error('Narration playback failed:', error);
+  });
+}
+
+function playStoryScene(sceneIndex, sceneLineIndex = 0) {
+  const scene = storyState.story.scenes[sceneIndex];
+  const token = ++storyAudioToken;
+  music.setDuck(0.28);
+  storyState.audioSceneIndex = sceneIndex;
+  storyState.lineIndex = storyState.story.scenes
+    .slice(0, sceneIndex)
+    .reduce((sum, item) => sum + item.lines.length, 0) + sceneLineIndex;
+  storyState.elapsed = 0;
+  storyState.paused = false;
+  storyState.completed = false;
+  storyAudio.pause();
+  storyAudio.src = scene.audio;
+  storyAudio.load();
+  renderStoryPlayback();
+
+  if (sceneLineIndex === 0) {
+    playStoryAudio(token);
+    return;
+  }
+
+  const seekAndPlay = () => {
+    if (!storyState || token !== storyAudioToken) return;
+    storyAudio.currentTime = scene.lines[sceneLineIndex].at;
+    playStoryAudio(token);
+  };
+  if (storyAudio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    seekAndPlay();
+  } else {
+    storyAudio.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+  }
+}
+
+function seekStoryLine(index) {
+  const target = storyLineAt(storyState.story, index);
+  if (target.sceneIndex !== storyState.audioSceneIndex) {
+    playStoryScene(target.sceneIndex, target.sceneLineIndex);
+    return;
+  }
+
+  const token = storyAudioToken;
+  music.setDuck(0.28);
+  storyState.lineIndex = index;
+  storyState.elapsed = 0;
+  storyState.paused = false;
+  storyState.completed = false;
+  renderStoryPlayback();
+
+  const seekAndPlay = () => {
+    if (!storyState || token !== storyAudioToken) return;
+    storyAudio.currentTime = target.line.at;
+    playStoryAudio(token);
+  };
+  if (storyAudio.readyState >= HTMLMediaElement.HAVE_METADATA) {
+    seekAndPlay();
+  } else {
+    storyAudio.addEventListener('loadedmetadata', seekAndPlay, { once: true });
+  }
+}
+
+storyAudio.addEventListener('ended', () => {
+  if (!storyState || storyState.paused) return;
+  const nextSceneIndex = storyState.audioSceneIndex + 1;
+  if (nextSceneIndex < storyState.story.scenes.length) {
+    playStoryScene(nextSceneIndex);
+    return;
+  }
+
+  storyState.lineIndex = storyState.totalLines - 1;
+  storyState.elapsed = storyLineAt(storyState.story, storyState.lineIndex).duration;
+  storyState.paused = true;
+  storyState.completed = true;
+  music.setDuck(1);
+  renderStoryPlayback();
+});
+
+function renderStoryPlayback() {
+  if (!storyState) return;
+  const { story, lineIndex } = storyState;
+  const { scene, sceneIndex, line } = storyLineAt(story, lineIndex);
+  if (storyState.sceneIndex !== sceneIndex) {
+    storyState.sceneIndex = sceneIndex;
+    renderer.setBackground(scene.background);
+  }
+  $('story-line').textContent = getLanguage() === 'en' ? line.textEn : line.text;
+  $('story-prev').disabled = lineIndex === 0;
+  const isPlaying = !storyState.paused && !storyState.completed;
+  const playLabel = storyState.completed ? t('story.play-again') : storyState.paused ? t('story.resume') : t('story.pause');
+  const subtitleLabel = storyState.subtitlesVisible ? t('story.subtitle.hide') : t('story.subtitle.show');
+  const nextLabel = lineIndex === storyState.totalLines - 1 ? t('story.finish') : t('story.next');
+  $('story-play-toggle').dataset.playing = String(isPlaying);
+  $('story-play-toggle').setAttribute('aria-label', playLabel);
+  $('story-play-toggle').title = playLabel;
+  $('story-next').setAttribute('aria-label', nextLabel);
+  $('story-next').title = nextLabel;
+  $('story-subtitle-toggle').setAttribute('aria-label', subtitleLabel);
+  $('story-subtitle-toggle').title = subtitleLabel;
+  $('story-subtitle-toggle').setAttribute('aria-pressed', String(storyState.subtitlesVisible));
+  storyCaption.hidden = !storyState.subtitlesVisible;
+}
+
+function renderStoryList() {
+  storyList.replaceChildren();
+  for (const story of STORIES) {
+    const characters = story.characters.map((id) => {
+      const character = CHARACTERS[id];
+      if (!character) throw new Error(`Story "${story.id}" references unknown character "${id}"`);
+      return character;
+    });
+    const button = document.createElement('button');
+    button.className = 'story-card';
+    button.type = 'button';
+
+    const portrait = document.createElement('img');
+    portrait.className = 'story-card-portrait';
+    portrait.src = characters[0].body.src;
+    portrait.alt = t('story.portrait', { name: characters[0].name });
+
+    const copy = document.createElement('span');
+    copy.className = 'story-card-copy';
+    const title = document.createElement('span');
+    title.className = 'story-card-title';
+    title.textContent = getLanguage() === 'en' ? story.titleEn : story.title;
+    const description = document.createElement('span');
+    description.className = 'story-card-description';
+    description.textContent = getLanguage() === 'en' ? story.descriptionEn : story.description;
+    const cast = document.createElement('span');
+    cast.className = 'story-card-characters';
+    const conjunction = getLanguage() === 'en' ? ' and ' : ' dan ';
+    cast.textContent = t('story.cast', { names: characters.map((character) => character.name).join(conjunction) });
+    copy.append(title, description, cast);
+
+    const action = document.createElement('span');
+    action.className = 'story-card-action';
+    action.textContent = t('story.start');
+    button.append(portrait, copy, action);
+    button.addEventListener('click', () => startStory(story));
+    storyList.append(button);
+  }
+}
+
+function setPuppetFacing(puppet, facing) {
+  puppet.facing = facing;
+  puppet.flip = { from: facing, to: facing, t: 1 };
+  puppet.flipX = facing;
+  puppet.facingMode = 'manual';
+  puppet.turnTimer = 0;
+  puppet.faceTargetX = null;
+  puppet.dance = null;
+  puppet.danceStarted = false;
+  puppet.danceOffset = [0, 0];
+  puppet.danceTilt = 0;
+}
+
+function startStory(story) {
+  const characters = story.characters.map((id) => {
+    const character = CHARACTERS[id];
+    if (!character) throw new Error(`Story "${story.id}" references unknown character "${id}"`);
+    return character;
+  });
+  if (characters.length !== 2) throw new Error(`Story "${story.id}" must have exactly two characters`);
+  const totalLines = story.scenes.reduce((sum, scene) => sum + scene.lines.length, 0);
+  if (totalLines === 0) throw new Error(`Story "${story.id}" has no narration lines`);
+
+  storyState = {
+    story,
+    lineIndex: 0,
+    elapsed: 0,
+    totalLines,
+    paused: false,
+    completed: false,
+    subtitlesVisible: true,
+    sceneIndex: -1,
+    audioSceneIndex: -1,
+    motionSceneIndex: -1,
+    saved: {
+      characters: puppets.map((puppet) => puppet.char.id),
+      settingsCharacters: controller.settings.characters,
+      facingMode,
+      facing: puppets.map((puppet) => ({
+        facing: puppet.facing,
+        flip: { ...puppet.flip },
+        flipX: puppet.flipX,
+        facingMode: puppet.facingMode,
+        faceTargetX: puppet.faceTargetX,
+        turnTimer: puppet.turnTimer,
+        baseScale: puppet.baseScale,
+      })),
+      background: backgroundInput.value,
+      introVisible: !intro.classList.contains('gone'),
+    },
+  };
+
+  closeAppMenu();
+  clearTimeout(toastTimer);
+  toast.classList.remove('show');
+  intro.classList.add('gone');
+  settings.hidden = true;
+  settingsToggle.setAttribute('aria-expanded', 'false');
+  controller.settings.characters = 'two';
+  $('opt-characters').value = 'two';
+  puppets.forEach((puppet, index) => {
+    puppet.setCharacter(characters[index]);
+    puppet.baseScale = Math.min(0.53, Math.max(0.18, view.w / 1800));
+    // The left puppet faces right; the right puppet faces left.
+    setPuppetFacing(
+      puppet,
+      story.facing?.[index] ?? (index === 0 ? faceDirection(characters[index]) : -faceDirection(characters[index])),
+    );
+  });
+  storyModal.hidden = true;
+  storyPlayback.hidden = false;
+  playStoryScene(0);
+  showChromeForActivity();
+  $('story-play-toggle').focus();
+}
+
+function stopStory() {
+  if (!storyState) return;
+  const { saved } = storyState;
+  storyState = null;
+  storyAudioToken++;
+  storyAudio.pause();
+  music.setDuck(1);
+  storyAudio.removeAttribute('src');
+  storyAudio.load();
+  puppets.forEach((puppet, index) => {
+    puppet.setCharacter(CHARACTERS[saved.characters[index]]);
+    const prior = saved.facing[index];
+    puppet.facing = prior.facing;
+    puppet.flip = { ...prior.flip };
+    puppet.flipX = prior.flipX;
+    puppet.facingMode = prior.facingMode;
+    puppet.faceTargetX = prior.faceTargetX;
+    puppet.turnTimer = prior.turnTimer;
+    puppet.baseScale = prior.baseScale;
+    puppet.dance = null;
+    puppet.danceStarted = false;
+    puppet.danceOffset = [0, 0];
+    puppet.danceTilt = 0;
+    for (const spring of Object.values(puppet.dSpring)) spring.snap(0);
+  });
+  controller.settings.characters = saved.settingsCharacters;
+  facingMode = saved.facingMode;
+  $('opt-characters').value = saved.settingsCharacters;
+  $('opt-char-left').value = saved.characters[0];
+  $('opt-char-right').value = saved.characters[1];
+  $('opt-facing').value = facingMode;
+  applyFacing();
+  backgroundInput.value = saved.background;
+  renderer.setBackground(saved.background);
+  intro.classList.toggle('gone', !saved.introVisible);
+  storyPlayback.hidden = true;
+  showChromeForActivity();
+  $('open-stories').focus();
+}
+
+function advanceStory() {
+  if (!storyState) return [];
+  const activeScene = storyState.story.scenes[storyState.audioSceneIndex];
+  let sceneLineIndex = 0;
+  while (
+    sceneLineIndex + 1 < activeScene.lines.length &&
+    activeScene.lines[sceneLineIndex + 1].at <= storyAudio.currentTime
+  ) {
+    sceneLineIndex++;
+  }
+  const lineOffset = storyState.story.scenes
+    .slice(0, storyState.audioSceneIndex)
+    .reduce((sum, item) => sum + item.lines.length, 0);
+  const lineIndex = lineOffset + sceneLineIndex;
+  const line = activeScene.lines[sceneLineIndex];
+  storyState.elapsed = Math.max(0, storyAudio.currentTime - line.at);
+  if (lineIndex !== storyState.lineIndex || storyState.sceneIndex < 0) {
+    storyState.lineIndex = lineIndex;
+    renderStoryPlayback();
+  }
+  const inputs = storyInputs(storyState.story, storyState.lineIndex, storyState.elapsed, view);
+  const { scene, sceneIndex } = storyLineAt(storyState.story, storyState.lineIndex);
+  if (storyState.motionSceneIndex !== sceneIndex) {
+    storyState.motionSceneIndex = sceneIndex;
+    if (scene.motion === 'war') inputs[1].danceTrigger = true;
+    if (scene.danceTrigger) inputs.forEach((input) => { input.danceTrigger = true; });
+  }
+  return inputs;
+}
+
 menuToggle.addEventListener('click', () => {
   const open = appMenu.hidden;
+  languageMenu.hidden = true;
+  languageToggle.setAttribute('aria-expanded', 'false');
   settings.hidden = true;
   settingsToggle.setAttribute('aria-expanded', 'false');
   appMenu.hidden = !open;
@@ -435,6 +946,55 @@ $('encyclopedia-close').addEventListener('click', closeEncyclopedia);
 encyclopediaModal.addEventListener('click', (e) => {
   if (e.target === encyclopediaModal) closeEncyclopedia();
 });
+$('open-stories').addEventListener('click', () => {
+  closeAppMenu();
+  renderStoryList();
+  storyModal.hidden = false;
+  storyList.querySelector('button')?.focus();
+});
+$('story-close').addEventListener('click', () => {
+  storyModal.hidden = true;
+  $('open-stories').focus();
+});
+storyModal.addEventListener('click', (e) => {
+  if (e.target === storyModal) {
+    storyModal.hidden = true;
+    $('open-stories').focus();
+  }
+});
+$('story-prev').addEventListener('click', () => {
+  if (!storyState || storyState.lineIndex === 0) return;
+  seekStoryLine(storyState.lineIndex - 1);
+});
+$('story-next').addEventListener('click', () => {
+  if (!storyState) return;
+  if (storyState.lineIndex === storyState.totalLines - 1) {
+    stopStory();
+    return;
+  }
+  seekStoryLine(storyState.lineIndex + 1);
+});
+$('story-play-toggle').addEventListener('click', () => {
+  if (!storyState) return;
+  if (storyState.completed) {
+    playStoryScene(0);
+  } else {
+    storyState.paused = !storyState.paused;
+    if (storyState.paused) storyAudio.pause();
+    if (storyState.paused) music.setDuck(1);
+    else {
+      music.setDuck(0.28);
+      playStoryAudio(storyAudioToken);
+    }
+  }
+  renderStoryPlayback();
+});
+$('story-subtitle-toggle').addEventListener('click', () => {
+  if (!storyState) return;
+  storyState.subtitlesVisible = !storyState.subtitlesVisible;
+  renderStoryPlayback();
+});
+$('story-exit').addEventListener('click', stopStory);
 $('quiz-close').addEventListener('click', closeQuiz);
 $('quiz-finish').addEventListener('click', closeQuiz);
 $('quiz-restart').addEventListener('click', () => {
@@ -447,6 +1007,8 @@ $('quiz-next').addEventListener('click', () => {
     return;
   }
   quizIndex++;
+  quizAnswered = false;
+  quizSelectedOptionIndex = -1;
   renderQuizQuestion();
   quizOptions.querySelector('button')?.focus();
 });
@@ -454,9 +1016,31 @@ quizModal.addEventListener('click', (e) => {
   if (e.target === quizModal) closeQuiz();
 });
 settingsToggle.addEventListener('click', () => {
+  languageMenu.hidden = true;
+  languageToggle.setAttribute('aria-expanded', 'false');
   closeAppMenu();
   settings.hidden = !settings.hidden;
   settingsToggle.setAttribute('aria-expanded', String(!settings.hidden));
+});
+languageToggle.addEventListener('click', () => {
+  const open = languageMenu.hidden;
+  languageMenu.hidden = !open;
+  languageToggle.setAttribute('aria-expanded', String(open));
+  if (open) languageMenu.querySelector('[aria-pressed="true"]')?.focus();
+});
+languageMenu.querySelectorAll('[data-language]').forEach((option) => {
+  option.addEventListener('click', () => {
+    setLanguage(option.dataset.language);
+    languageMenu.hidden = true;
+    languageToggle.setAttribute('aria-expanded', 'false');
+    languageToggle.focus();
+  });
+});
+document.addEventListener('pointerdown', (event) => {
+  if (!languagePicker.contains(event.target)) {
+    languageMenu.hidden = true;
+    languageToggle.setAttribute('aria-expanded', 'false');
+  }
 });
 $('opt-fingers').addEventListener('change', (e) => (controller.settings.fingers = e.target.value));
 $('opt-bodyhand').addEventListener('change', (e) => (controller.settings.bodyHand = e.target.value));
@@ -478,7 +1062,7 @@ $('opt-facing').addEventListener('change', (e) => {
   applyFacing();
 });
 const backgroundInput = $('opt-background');
-for (const background of BACKGROUNDS) backgroundInput.add(new Option(background.label, background.key));
+for (const background of BACKGROUNDS) backgroundInput.add(new Option(t(background.label), background.key));
 backgroundInput.value = BACKGROUNDS[0].key;
 backgroundInput.addEventListener('change', (e) => renderer.setBackground(e.target.value));
 $('opt-audience-view').addEventListener('change', (e) => renderer.setAudienceView(e.target.checked));
@@ -497,8 +1081,65 @@ const cameraPoppedOut = () => !!cameraWin && !cameraWin.closed;
 function syncPreview() {
   const out = cameraPoppedOut();
   previewBox.hidden = !showPreview || controller.source !== 'camera' || out;
-  popoutBtn.textContent = out ? 'Bring camera back' : 'Open camera in new window';
+  popoutBtn.textContent = t(out ? 'settings.camera.return' : 'settings.camera.open');
+  if (!previewBox.hidden && previewBox.style.left) {
+    const rect = previewBox.getBoundingClientRect();
+    positionPreview(rect.left, rect.top);
+  }
 }
+
+function positionPreview(left, top) {
+  const margin = 8;
+  const maxLeft = Math.max(margin, innerWidth - previewBox.offsetWidth - margin);
+  const maxTop = Math.max(margin, innerHeight - previewBox.offsetHeight - margin);
+  previewBox.style.left = `${clamp(left, margin, maxLeft)}px`;
+  previewBox.style.top = `${clamp(top, margin, maxTop)}px`;
+  previewBox.style.right = 'auto';
+  previewBox.style.bottom = 'auto';
+}
+
+let previewDrag = null;
+previewBox.addEventListener('pointerdown', (event) => {
+  if (event.target.closest('.popout-btn')) return;
+  const rect = previewBox.getBoundingClientRect();
+  previewDrag = {
+    pointerId: event.pointerId,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+  };
+  previewBox.setPointerCapture(event.pointerId);
+  previewBox.classList.add('dragging');
+  event.preventDefault();
+});
+previewBox.addEventListener('pointermove', (event) => {
+  if (!previewDrag || event.pointerId !== previewDrag.pointerId) return;
+  positionPreview(event.clientX - previewDrag.offsetX, event.clientY - previewDrag.offsetY);
+});
+function finishPreviewDrag(event) {
+  if (!previewDrag || event.pointerId !== previewDrag.pointerId) return;
+  previewBox.classList.remove('dragging');
+  if (previewBox.hasPointerCapture(event.pointerId)) previewBox.releasePointerCapture(event.pointerId);
+  previewDrag = null;
+}
+previewBox.addEventListener('pointerup', finishPreviewDrag);
+previewBox.addEventListener('pointercancel', finishPreviewDrag);
+previewBox.addEventListener('keydown', (event) => {
+  const delta = {
+    ArrowLeft: [-16, 0],
+    ArrowRight: [16, 0],
+    ArrowUp: [0, -16],
+    ArrowDown: [0, 16],
+  }[event.key];
+  if (!delta) return;
+  const rect = previewBox.getBoundingClientRect();
+  positionPreview(rect.left + delta[0], rect.top + delta[1]);
+  event.preventDefault();
+});
+window.addEventListener('resize', () => {
+  if (previewBox.hidden || !previewBox.style.left) return;
+  const rect = previewBox.getBoundingClientRect();
+  positionPreview(rect.left, rect.top);
+});
 
 function toggleCameraWindow() {
   if (cameraPoppedOut()) {
@@ -506,7 +1147,7 @@ function toggleCameraWindow() {
   } else {
     const w = Math.round(Math.min(960, screen.availWidth * 0.6));
     cameraWin = window.open('camera.html', 'wayang-camera', `popup,width=${w},height=${Math.round(w / tracker.aspect)}`);
-    if (!cameraWin) showToast('Pop-up blocked. Allow pop-ups for this site to open the camera window.');
+    if (!cameraWin) showToast(t('toast.popup-blocked'));
   }
   syncPreview();
 }
@@ -519,14 +1160,21 @@ $('opt-size').addEventListener('input', (e) => {
 // ---------- backsound ----------
 const music = new BackgroundMusic(MUSIC_TRACKS[0].src);
 const beatClock = new BeatClock(music.el);
-beatClock.load('assets/backsound-beats.json');
 window.wayang.music = music;
 window.wayang.beatClock = beatClock;
 const musicInput = $('opt-music');
-for (const track of MUSIC_TRACKS) musicInput.add(new Option(track.label, track.id));
+for (const track of MUSIC_TRACKS) musicInput.add(new Option(t(track.label), track.id));
 musicInput.value = MUSIC_TRACKS[0].id;
 let selectedMusic = MUSIC_TRACKS[0];
 let musicSelectionVersion = 0;
+function refreshLocalizedOptions() {
+  const background = backgroundInput.value || BACKGROUNDS[0].key;
+  const musicTrack = musicInput.value || selectedMusic.id;
+  backgroundInput.replaceChildren(...BACKGROUNDS.map((item) => new Option(t(item.label), item.key)));
+  backgroundInput.value = background;
+  musicInput.replaceChildren(...MUSIC_TRACKS.map((item) => new Option(t(item.label), item.id)));
+  musicInput.value = musicTrack;
+}
 musicInput.addEventListener('change', async (e) => {
   const track = MUSIC_TRACKS.find((item) => item.id === e.target.value);
   if (!track) throw new Error(`Unknown music track "${e.target.value}"`);
@@ -543,7 +1191,7 @@ musicInput.addEventListener('change', async (e) => {
     musicInput.value = selectedMusic.id;
     beatClock.setBeats(null);
     if (selectedMusic.beats) beatClock.load(selectedMusic.beats);
-    showToast(`Musik tidak dapat diputar: ${err?.message || err}`);
+    showToast(t('toast.music-error', { message: err?.message || err }));
   }
 });
 const soundBtn = $('sound-toggle');
@@ -551,9 +1199,28 @@ const volumeInput = $('opt-volume');
 volumeInput.value = String(music.volume);
 function syncSoundUi() {
   soundBtn.setAttribute('aria-pressed', String(music.muted));
-  soundBtn.setAttribute('aria-label', music.muted ? 'Unmute music' : 'Mute music');
+  soundBtn.setAttribute('aria-label', t(music.muted ? 'toast.music-unmute' : 'toast.music-mute'));
 }
 syncSoundUi();
+syncLanguagePicker();
+document.addEventListener('app-language-change', () => {
+  syncLanguagePicker();
+  refreshLocalizedOptions();
+  syncPreview();
+  syncSoundUi();
+  updateHud();
+  if (!quizModal.hidden) {
+    if (quizResults.hidden) {
+      quizQuestions = quizQuestions.map((question) => localizeQuizQuestion(question.sourceIndex));
+      renderQuizQuestion();
+    } else {
+      renderQuizResultsText();
+    }
+  }
+  if (!encyclopediaModal.hidden) renderEncyclopedia();
+  if (!storyModal.hidden) renderStoryList();
+  if (storyState) renderStoryPlayback();
+});
 // autoplay with sound needs a user gesture: begin on the first click / tap / key
 // (the mute button and M key handle themselves, so a first "mute" press doesn't start then stop it)
 const startMusic = (e) => {
@@ -591,6 +1258,21 @@ function turnPuppet(i) {
 
 addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
+    if (!languageMenu.hidden) {
+      languageMenu.hidden = true;
+      languageToggle.setAttribute('aria-expanded', 'false');
+      languageToggle.focus();
+      return;
+    }
+    if (storyState) {
+      stopStory();
+      return;
+    }
+    if (!storyModal.hidden) {
+      storyModal.hidden = true;
+      $('open-stories').focus();
+      return;
+    }
     if (!quizModal.hidden) {
       closeQuiz();
       return;
@@ -604,7 +1286,7 @@ addEventListener('keydown', (e) => {
       return;
     }
   }
-  if (!quizModal.hidden || !encyclopediaModal.hidden) return;
+  if (!quizModal.hidden || !encyclopediaModal.hidden || !storyModal.hidden || storyState) return;
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   const k = e.key.toLowerCase();
   if (k === 'f') turnPuppet(0);
@@ -633,22 +1315,25 @@ function updateHud() {
   const { source, status } = controller;
   let text, cls = '';
   if (source === 'camera') {
+    statusPill.hidden = false;
     if (status.hands === 0) {
-      text = controller.puppetCount === 2 ? 'Camera on · raise both hands' : 'Camera on · show your hand';
+      text = t(controller.puppetCount === 2 ? 'hud.camera-both' : 'hud.camera-one');
       cls = 'warn';
     } else {
       text = {
-        'two puppets': status.hands === 2 ? 'Two puppets · one per hand' : 'Two puppets · 1 hand seen',
-        'two hands': 'One puppet · gapit + tuding',
-        'one hand': 'One puppet · palm + fingers',
+        'two puppets': t(status.hands === 2 ? 'hud.two-puppets' : 'hud.two-puppets-one-hand'),
+        'two hands': t('hud.one-puppet-rods'),
+        'one hand': t('hud.one-puppet-fingers'),
       }[status.mode] ?? status.mode;
-      if (status.calibrating) text += ' · calibrating depth';
+      if (status.calibrating) text += ` · ${t('hud.calibrating')}`;
       cls = 'live';
     }
   } else if (source === 'mouse') {
-    text = 'Mouse · scroll for depth';
+    statusPill.hidden = false;
+    text = t('hud.mouse');
   } else {
-    text = 'Demo';
+    statusPill.hidden = true;
+    text = '';
   }
   if (statusText.textContent !== text) statusText.textContent = text;
   statusPill.className = `pill ${cls}`;
@@ -733,12 +1418,12 @@ let last = performance.now() / 1000;
 const PHYS_DT = 1 / 120;
 
 function tick(nowMs) {
-  const t = nowMs / 1000;
-  const dt = clamp(t - last, 0, 1 / 15);
-  last = t;
+  const nowSeconds = nowMs / 1000;
+  const dt = clamp(nowSeconds - last, 0, 1 / 15);
+  last = nowSeconds;
 
-  const inputs = controller.update(t, view);
-  const active = puppets.slice(0, controller.puppetCount);
+  const inputs = storyState ? advanceStory() : controller.update(nowSeconds, view);
+  const active = puppets.slice(0, storyState ? 2 : controller.puppetCount);
   // in "face each other" mode each character keeps its eyes on the other
   if (active.length === 2) {
     active[0].faceTargetX = active[1].pos.x;
@@ -754,7 +1439,11 @@ function tick(nowMs) {
   active.forEach((p, j) => {
     if (p.danceStarted) {
       p.danceStarted = false;
-      showToast(active.length === 2 ? `${j === 0 ? 'Left' : 'Right'} puppet · Kiprahan` : 'Kiprahan');
+      if (!storyState) {
+        showToast(active.length === 2
+          ? t('story.puppet-toast', { side: t(j === 0 ? 'story.left' : 'story.right') })
+          : 'Kiprahan');
+      }
     }
   });
 
@@ -776,13 +1465,13 @@ function tick(nowMs) {
     .sort((a, b) => a.depth - b.depth);
 
   // blencong: an oil flame — flicker, and a slow sway that nudges every shadow
-  const flicker = 1 + 0.03 * Math.sin(t * 7.3) + 0.02 * Math.sin(t * 13.7 + 1.1) + (noise1(t * 6.5) - 0.5) * 0.07;
-  const sway = (noise1(t * 1.2 + 10) - 0.5) * 26;
+  const flicker = 1 + 0.03 * Math.sin(nowSeconds * 7.3) + 0.02 * Math.sin(nowSeconds * 13.7 + 1.1) + (noise1(nowSeconds * 6.5) - 0.5) * 0.07;
+  const sway = (noise1(nowSeconds * 1.2 + 10) - 0.5) * 26;
 
   const frame = {
     view,
     layers,
-    time: t,
+    time: nowSeconds,
     lamp: [STAGE_W / 2 + sway, -560, 1300],
     eye: [STAGE_W / 2, STAGE_H * 0.55, 2300],
     lampColor: [1.0, 0.8, 0.56],

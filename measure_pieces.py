@@ -10,8 +10,8 @@ For arms drawn hanging straight down, the way Arjuna's are:
   * hand (file name contains "hand")
                           prox = middle of the first row (the wrist)
                           grip = the fingertip: the opaque pixel farthest from the wrist, where the rod holds the hand
-These are starting points. Pieces drawn in another pose (like the original's T-pose arms) have their rivets
-elsewhere; read those off the image instead. Then check by eye in the browser: index.html?left=<id>&right=<id>
+These are starting points. Pieces drawn in another pose have their rivets elsewhere; read those off the image
+instead. Then check by eye in the browser: index.html?left=<id>&right=<id>
 """
 import os
 import sys
