@@ -49,10 +49,19 @@
       <div class="pill" id="status" hidden><span class="dot"></span><span id="status-text"></span></div>
     </div>
 
-    <button id="sound-toggle" class="icon-btn sound-btn" aria-label="Mute music" aria-pressed="false">
-      <svg class="on" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4Zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-8.8v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z"/></svg>
-      <svg class="off" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4Zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4-2.7-2.7Z" transform="translate(2 0)"/></svg>
-    </button>
+    <div id="sound-control" class="sound-control">
+      <button id="sound-toggle" class="icon-btn sound-btn" type="button" aria-label="Music volume" aria-expanded="false" aria-controls="sound-menu" title="Music volume" data-i18n-aria-label="settings.volume" data-i18n-title="settings.volume">
+        <svg class="on" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4Zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4Zm-2.5-8.8v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6Z"/></svg>
+        <svg class="off" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M4 9v6h4l5 4V5L8 9H4Zm12.6 3 2.7-2.7-1.4-1.4-2.7 2.7-2.7-2.7-1.4 1.4 2.7 2.7-2.7 2.7 1.4 1.4 2.7-2.7 2.7 2.7 1.4-1.4-2.7-2.7Z" transform="translate(2 0)"/></svg>
+      </button>
+      <div id="sound-menu" class="panel sound-menu" role="group" aria-label="Music volume" data-i18n-aria-label="settings.volume" hidden>
+        <label for="opt-volume">
+          <span data-i18n="settings.volume">Music volume</span>
+          <input type="range" id="opt-volume" min="0" max="1" step="0.01" value="0.6" />
+        </label>
+        <button id="sound-mute-toggle" class="btn small" type="button" aria-pressed="false">Mute music</button>
+      </div>
+    </div>
     <div id="language-picker" class="language-picker">
       <button id="language-toggle" class="icon-btn language-toggle" type="button" aria-label="Change language" aria-expanded="false" aria-controls="language-menu" title="Change language" data-i18n-aria-label="nav.language" data-i18n-title="nav.language">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12h17M12 3a14.5 14.5 0 0 1 0 18M12 3a14.5 14.5 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
@@ -145,9 +154,6 @@
       <button id="opt-popout" class="btn small" type="button" data-i18n="settings.camera.open">Open camera in new window</button>
       <label><span data-i18n="settings.size">Puppet size</span>
         <input type="range" id="opt-size" min="0.36" max="0.72" step="0.01" value="0.53" />
-      </label>
-      <label><span data-i18n="settings.volume">Music volume</span>
-        <input type="range" id="opt-volume" min="0" max="1" step="0.01" value="0.6" />
       </label>
     </aside>
 

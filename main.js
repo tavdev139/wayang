@@ -1294,13 +1294,38 @@ musicInput.addEventListener('change', async (e) => {
   }
 });
 const soundBtn = $('sound-toggle');
+const soundControl = $('sound-control');
+const soundMenu = $('sound-menu');
+const soundMuteBtn = $('sound-mute-toggle');
 const volumeInput = $('opt-volume');
 volumeInput.value = String(music.volume);
 function syncSoundUi() {
-  soundBtn.setAttribute('aria-pressed', String(music.muted));
-  soundBtn.setAttribute('aria-label', t(music.muted ? 'toast.music-unmute' : 'toast.music-mute'));
+  soundBtn.dataset.muted = String(music.muted);
+  soundMuteBtn.setAttribute('aria-pressed', String(music.muted));
+  soundMuteBtn.textContent = t(music.muted ? 'toast.music-unmute' : 'toast.music-mute');
+}
+function setSoundMenuOpen(open, restoreFocus = false) {
+  if (open) {
+    closeAppMenu();
+    settings.hidden = true;
+    settingsToggle.setAttribute('aria-expanded', 'false');
+    languageMenu.hidden = true;
+    languageToggle.setAttribute('aria-expanded', 'false');
+  }
+  soundMenu.hidden = !open;
+  soundBtn.setAttribute('aria-expanded', String(open));
+  if (open) volumeInput.focus();
+  else if (restoreFocus) soundBtn.focus();
 }
 syncSoundUi();
+soundBtn.addEventListener('click', () => setSoundMenuOpen(soundMenu.hidden));
+soundMuteBtn.addEventListener('click', toggleMusic);
+soundControl.addEventListener('focusout', (event) => {
+  if (!soundControl.contains(event.relatedTarget)) setSoundMenuOpen(false);
+});
+document.addEventListener('pointerdown', (event) => {
+  if (!soundMenu.hidden && !soundControl.contains(event.target)) setSoundMenuOpen(false);
+});
 syncLanguagePicker();
 document.addEventListener('app-language-change', () => {
   syncLanguagePicker();
@@ -1329,7 +1354,7 @@ document.addEventListener('app-language-change', () => {
 // autoplay with sound needs a user gesture: begin on the first click / tap / key
 // (the mute button and M key handle themselves, so a first "mute" press doesn't start then stop it)
 const startMusic = (e) => {
-  if (e.target?.closest?.('#sound-toggle') || e.key?.toLowerCase() === 'm') return;
+  if (e.target?.closest?.('#sound-toggle, #sound-mute-toggle') || e.key?.toLowerCase() === 'm') return;
   music.start().then(() => {
     if (music.started) {
       removeEventListener('pointerdown', startMusic, true);
@@ -1344,10 +1369,10 @@ function toggleMusic() {
   if (!music.muted) music.start();
   syncSoundUi();
 }
-soundBtn.addEventListener('click', toggleMusic);
 volumeInput.addEventListener('input', (e) => {
   music.setVolume(parseFloat(e.target.value));
   if (music.muted && music.volume > 0) toggleMusic();
+  else syncSoundUi();
 });
 
 // F / G turn the left / right character around (switches facing to manual so it sticks)
@@ -1367,6 +1392,10 @@ addEventListener('keydown', (e) => {
       languageMenu.hidden = true;
       languageToggle.setAttribute('aria-expanded', 'false');
       languageToggle.focus();
+      return;
+    }
+    if (!soundMenu.hidden) {
+      setSoundMenuOpen(false, true);
       return;
     }
     if (storyState) {
