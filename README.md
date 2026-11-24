@@ -11,7 +11,7 @@ Pilih ikon globe di baris atas untuk beralih antara Bahasa Indonesia dan English
 
 ## Karakter
 
-Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada Arjuna, Hanoman, Gatot Kaca, Werkudara, Yudistira, Rahwana, Dewi Sinta, Semar, Petruk, Dewa Ruci, dan Drona.
+Semua karakter didaftarkan di satu tempat: **`characters.js`**. Saat ini ada Arjuna, Hanoman, Gatot Kaca, Werkudara, Yudistira, Rahwana, Dewi Sinta, Semar, Petruk, Dewa Ruci, Drona, Rama, dan Bagong.
 
 - Pilih karakter di **Settings → Left puppet / Right puppet**.
 - Atau lewat alamat: `index.html?left=arjuna&right=wayang-baru`.
