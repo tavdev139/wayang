@@ -1301,8 +1301,10 @@ const volumeInput = $('opt-volume');
 volumeInput.value = String(music.volume);
 function syncSoundUi() {
   soundBtn.dataset.muted = String(music.muted);
+  soundMuteBtn.dataset.muted = String(music.muted);
   soundMuteBtn.setAttribute('aria-pressed', String(music.muted));
-  soundMuteBtn.textContent = t(music.muted ? 'toast.music-unmute' : 'toast.music-mute');
+  soundMuteBtn.setAttribute('aria-label', t('sound.mute-toggle'));
+  soundMuteBtn.title = t(music.muted ? 'toast.music-unmute' : 'toast.music-mute');
 }
 function setSoundMenuOpen(open, restoreFocus = false) {
   if (open) {

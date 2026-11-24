@@ -299,7 +299,35 @@ h1 {
   width: 100%;
   accent-color: var(--gold);
 }
-.sound-menu .btn { width: 100%; }
+.sound-volume-control { display: grid; gap: 8px; }
+.sound-volume-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sound-volume-row input[type='range'] {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+.sound-mute-toggle {
+  appearance: none;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(255, 235, 200, 0.06);
+  color: var(--ink);
+  cursor: pointer;
+}
+.sound-mute-toggle:hover { border-color: rgba(217, 164, 65, 0.6); }
+.sound-mute-toggle:focus-visible { outline: 2px solid var(--gold-hi); outline-offset: 2px; }
+.sound-mute-toggle .off,
+.sound-mute-toggle[data-muted='true'] .on { display: none; }
+.sound-mute-toggle[data-muted='true'] .off { display: block; }
 .language-picker {
   position: fixed;
   z-index: 25;
