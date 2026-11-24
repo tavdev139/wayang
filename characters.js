@@ -12,9 +12,12 @@
 //             stickTop/stickFoot  the gapit (body stick) line; ties = y positions of the binding wraps
 //   arms    { L: {upper, fore, hand}, R: {...} }, each piece { src, size, prox, dist | grip } in that PNG's own pixels
 //             prox   the rivet toward the body  ·  dist   the rivet toward the hand  ·  grip   where the rod holds the hand
-//   rest    where each hand hangs when you are not steering it: offsets from its shoulder, in body-image pixels
 //   armDamping optional multiplier for arm spring damping (defaults to 1)
 //   jointDamping optional multiplier for shoulder, elbow, and wrist hinge damping (defaults to armDamping)
+//   armPartScale optional {upper, fore, hand} scaling for each PNG and its pivots
+//   armLengthRatios optional {upper, fore, hand} body-relative proportions (used only when specified)
+//   armReach optional {min, max} limits for hand distance as ratios of the combined arm reach
+//   rest    where each hand hangs when not steered: offsets from its shoulder, in body-image pixels
 //   armBend optional elbow bend sign for each side: -1 or 1
 //   rigidHand optional flag to make the palm follow the forearm without wrist flex
 //   armsOnTop optional flag to draw both articulated arms over the body image
@@ -77,16 +80,17 @@ const WERKUDARA_ARMS = {
   },
 };
 
+// Cut from the user-provided reference; pivots are centered on the visible rivets.
 const YUDISTIRA_ARMS = {
   L: {
-    upper: { src: 'assets/upper-arm-yudistira-l.png', size: [222, 85], prox: [197, 40], dist: [0, 39] },
-    fore: { src: 'assets/forearm-yudistira-l.png', size: [277, 74], prox: [261, 30], dist: [33, 30] },
-    hand: { src: 'assets/hand-yudistira-l.png', size: [71, 137], prox: [32, 15], grip: [35, 79] },
+    upper: { src: 'assets/upper-arm-yudistira-l.png', size: [175, 452], prox: [142, 419], dist: [32, 32] },
+    fore: { src: 'assets/forearm-yudistira-l.png', size: [543, 62], prox: [514, 29], dist: [29, 33] },
+    hand: { src: 'assets/hand-yudistira-l.png', size: [155, 310], prox: [47, 18], grip: [64, 116] },
   },
   R: {
-    upper: { src: 'assets/upper-arm-yudistira-r.png', size: [222, 86], prox: [23, 40], dist: [222, 42] },
-    fore: { src: 'assets/forearm-yudistira-r.png', size: [273, 73], prox: [0, 36], dist: [242, 34] },
-    hand: { src: 'assets/hand-yudistira-r.png', size: [77, 137], prox: [39, 14], grip: [39, 79] },
+    upper: { src: 'assets/upper-arm-yudistira-r.png', size: [197, 443], prox: [33, 410], dist: [164, 31] },
+    fore: { src: 'assets/forearm-yudistira-r.png', size: [556, 66], prox: [29, 37], dist: [527, 29] },
+    hand: { src: 'assets/hand-yudistira-r.png', size: [158, 315], prox: [112, 16], grip: [96, 124] },
   },
 };
 
@@ -142,6 +146,34 @@ const PETRUK_ARMS = {
     hand: { src: 'assets/hand-petruk-r.png', size: [97, 192], prox: [66, 12], grip: [56, 109] },
   },
 };
+
+const DEWA_RUCI_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-dewa-ruci-l.png', size: [130, 348], prox: [28, 24], dist: [106, 315] },
+    fore: { src: 'assets/forearm-dewa-ruci-l.png', size: [408, 69], prox: [387, 22], dist: [22, 34] },
+    hand: { src: 'assets/hand-dewa-ruci-l.png', size: [117, 260], prox: [85, 55], grip: [78, 14] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-dewa-ruci-r.png', size: [53, 330], prox: [27, 23], dist: [28, 298] },
+    fore: { src: 'assets/forearm-dewa-ruci-r.png', size: [417, 71], prox: [30, 37], dist: [392, 25] },
+    hand: { src: 'assets/hand-dewa-ruci-r-straight.png', size: [230, 114], prox: [110, 52], grip: [17, 55] },
+  },
+};
+
+const DRONA_ARMS = {
+  L: {
+    upper: { src: 'assets/upper-arm-drona-l.png', size: [86, 220], prox: [18, 14], dist: [69, 203] },
+    fore: { src: 'assets/forearm-drona-l.png', size: [247, 33], prox: [19, 16], dist: [228, 16] },
+    hand: { src: 'assets/hand-drona-l.png', size: [70, 134], prox: [20, 12], grip: [61, 130] },
+  },
+  R: {
+    upper: { src: 'assets/upper-arm-drona-r.png', size: [86, 218], prox: [68, 13], dist: [14, 202] },
+    fore: { src: 'assets/forearm-drona-r.png', size: [246, 34], prox: [228, 17], dist: [19, 17] },
+    hand: { src: 'assets/hand-drona-r.png', size: [62, 142], prox: [42, 15], grip: [32, 108] },
+  },
+};
+
+const TOTAL_ARM_LENGTH = 0.5;
 
 const RAW = [
   {
@@ -228,9 +260,10 @@ const RAW = [
       ties: [315, 720, 990],
     },
     arms: YUDISTIRA_ARMS,
+    armLengthRatios: { upper: 1, fore: 1.35, hand: 0.6 },
     armDamping: 1.5,
     jointDamping: 3,
-    rest: { L: [-15, 420], R: [15, 420] },
+    armReach: { min: 0.4, max: 0.96 },
   },
   {
     id: 'rahwana',
@@ -249,9 +282,10 @@ const RAW = [
     arms: RAHWANA_ARMS,
     armDamping: 1.5,
     jointDamping: 3,
+    armReach: { min: 0.4, max: 0.96 },
     armBend: { L: 1, R: -1 },
-    armsOnTop: true,
-    rest: { L: [0, 420], R: [0, 420] },
+    armsOnTop: false,
+    rest: { L: [0, 360], R: [0, 360] },
   },
   {
     id: 'dewi-sinta',
@@ -269,9 +303,10 @@ const RAW = [
     arms: DEWI_SINTA_ARMS,
     armDamping: 1.5,
     jointDamping: 3,
+    armReach: { min: 0.4, max: 0.9 },
     armBend: { L: 1, R: -1 },
     armsOnTop: true,
-    rest: { L: [-35, 500], R: [5, 500] },
+    rest: { L: [-18, 520], R: [18, 520] },
   },
   {
     id: 'semar',
@@ -289,10 +324,11 @@ const RAW = [
     arms: SEMAR_ARMS,
     armDamping: 1.5,
     jointDamping: 2.8,
+    armReach: { min: 0.4, max: 0.96 },
+    armBend: { L: 1, R: -1 },
     armsOnTop: true,
     rigidHand: true,
-    armBend: { L: -1, R: 1 },
-    rest: { L: [-90, 420], R: [162, 6] },
+    rest: { L: [-90, 420], R: [250, -90] },
   },
   {
     id: 'petruk',
@@ -310,18 +346,112 @@ const RAW = [
     arms: PETRUK_ARMS,
     armDamping: 1.5,
     jointDamping: 3,
+    armBend: { L: -1, R: 1 },
     armsOnTop: true,
     rigidHand: true,
-    armBend: { L: -1, R: 1 },
     rest: { L: [-500, 330], R: [500, 330] },
+  },
+  {
+    id: 'dewa-ruci',
+    name: 'Dewa Ruci',
+    scale: 1.29,
+    faceDirection: 1,
+    body: {
+      src: 'assets/body-dewa-ruci.png',
+      size: [674, 1069],
+      anchor: [324, 550],
+      shoulder: { L: [479, 277], R: [120, 277] },
+      stickTop: [334, 330],
+      stickFoot: [334, 1055],
+      ties: [370, 730, 990],
+    },
+    arms: {
+      L: DEWA_RUCI_ARMS.R,
+      R: DEWA_RUCI_ARMS.L,
+    },
+    armDamping: 1.5,
+    jointDamping: 2.8,
+    armBend: { L: 1, R: -1 },
+    armsOnTop: true,
+    rigidHand: true,
+    rest: { L: [350, 275], R: [-350, 275] },
+  },
+  {
+    id: 'drona',
+    name: 'Drona',
+    scale: 1.77,
+    faceDirection: 1,
+    body: {
+      src: 'assets/body-drona.png',
+      size: [543, 779],
+      anchor: [272, 454],
+      shoulder: { L: [390, 190], R: [210, 178] },
+      stickTop: [277, 229],
+      stickFoot: [277, 769],
+      ties: [284, 619, 749],
+    },
+    arms: DRONA_ARMS,
+    armPartScale: { upper: 0.8, fore: 0.8, hand: 0.9 },
+    armDamping: 1.5,
+    jointDamping: 2.8,
+    armReach: { min: 0.4, max: 1 },
+    armBend: { L: -1, R: 1 },
+    armsOnTop: true,
+    rigidHand: true,
+    rest: { L: [340, 80], R: [-340, 80] },
   },
 ];
 
 // Parts get a texture key of the form "<id>/<part>"; Arm and Puppet read the same names ("upperL", "handR", ...).
 function finalize(c) {
   const parts = { body: { ...c.body } };
+  const scalePoint = (point, scale) => point?.map((coordinate) => coordinate * scale);
+  // A hand's grip can sit at the wrist, so normalize its cropped visual reach instead.
+  const handExtent = (part) => {
+    const [width, height] = part.size;
+    const [x, y] = part.prox;
+    return Math.max(
+      Math.hypot(x, y),
+      Math.hypot(width - x, y),
+      Math.hypot(x, height - y),
+      Math.hypot(width - x, height - y),
+    );
+  };
+  const bodyHeight = c.body.size[1];
+  const ratios = c.armLengthRatios;
+  const ratioTotal = ratios ? ratios.upper + ratios.fore + ratios.hand : 0;
+  if (ratios && (
+    !Number.isFinite(ratioTotal) ||
+    ratioTotal <= 0 ||
+    ![ratios.upper, ratios.fore, ratios.hand].every((ratio) => Number.isFinite(ratio) && ratio > 0)
+  )) {
+    throw new Error(`Invalid arm length ratios for ${c.id}`);
+  }
   for (const side of ['L', 'R']) {
-    for (const slot of ['upper', 'fore', 'hand']) parts[slot + side] = { ...c.arms[side][slot] };
+    for (const slot of ['upper', 'fore', 'hand']) {
+      const source = c.arms[side][slot];
+      let renderScale = c.armPartScale?.[slot] ?? 1;
+      if (ratios) {
+        const sourceLength = slot === 'hand'
+          ? handExtent(source)
+          : Math.hypot(source.dist[0] - source.prox[0], source.dist[1] - source.prox[1]);
+        if (!Number.isFinite(bodyHeight) || bodyHeight <= 0 || !Number.isFinite(sourceLength) || sourceLength <= 0) {
+          throw new Error(`Invalid ${c.id}/${side}/${slot} dimensions or pivots`);
+        }
+        const targetLength = bodyHeight * TOTAL_ARM_LENGTH * ratios[slot] / ratioTotal;
+        renderScale = targetLength / sourceLength;
+      }
+      parts[slot + side] = {
+        ...source,
+        size: scalePoint(source.size, renderScale),
+        prox: scalePoint(source.prox, renderScale),
+        ...(source.dist ? { dist: scalePoint(source.dist, renderScale) } : {}),
+        ...(source.grip ? { grip: scalePoint(source.grip, renderScale) } : {}),
+        renderScale,
+        sourceSize: source.size,
+        sourceProx: source.prox,
+      };
+    }
   }
   for (const [name, part] of Object.entries(parts)) part.key = `${c.id}/${name}`;
   return { ...c, parts };

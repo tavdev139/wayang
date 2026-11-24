@@ -88,23 +88,13 @@
         </span>
         <svg class="menu-item-arrow" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
-      <button id="open-encyclopedia" class="menu-item" type="button">
-        <span class="menu-item-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5m0-8h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        </span>
-        <span class="menu-item-copy">
-          <span class="menu-item-title" data-i18n="menu.encyclopedia.title">Ensiklopedia Tokoh</span>
-          <span class="menu-item-description" data-i18n="menu.encyclopedia.description">Kenali watak dan kisah para wayang.</span>
-        </span>
-        <svg class="menu-item-arrow" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
       <button id="open-stories" class="menu-item" type="button">
         <span class="menu-item-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" width="20" height="20"><path d="M5 4.5A2.5 2.5 0 0 1 7.5 2H20v17H7.5A2.5 2.5 0 0 0 5 21.5v-17ZM5 18a2.5 2.5 0 0 1 2.5-2.5H20M10 7h6M10 10h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </span>
         <span class="menu-item-copy">
           <span class="menu-item-title" data-i18n="menu.stories.title">Cerita Wayang</span>
-          <span class="menu-item-description" data-i18n="menu.stories.description">Tonton kisah wayang dengan narator dan subtitle tersinkron.</span>
+          <span class="menu-item-description" data-i18n="menu.stories.description">Tonton kisah wayang dengan narator, subtitle tersinkron, dan gestur menunjuk sesuai fokus adegan atau pembicara.</span>
         </span>
         <svg class="menu-item-arrow" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -199,20 +189,6 @@
       </section>
     </div>
 
-    <div id="encyclopedia-modal" class="quiz-backdrop" hidden>
-      <section class="panel quiz-dialog encyclopedia-dialog" role="dialog" aria-modal="true" aria-labelledby="encyclopedia-title" tabindex="-1">
-        <header class="quiz-header">
-          <div>
-            <p class="eyebrow">Wayang Kulit</p>
-            <h2 id="encyclopedia-title" data-i18n="encyclopedia.title">Ensiklopedia Tokoh</h2>
-          </div>
-          <button id="encyclopedia-close" class="quiz-close" type="button" aria-label="Tutup ensiklopedia" data-i18n-aria-label="encyclopedia.close">×</button>
-        </header>
-        <p class="encyclopedia-intro" data-i18n="encyclopedia.intro">Kenali watak, keluarga, dan kisah penting setiap tokoh. Beberapa detail dapat berbeda menurut tradisi wayang.</p>
-        <div id="encyclopedia-cards" class="encyclopedia-grid"></div>
-      </section>
-    </div>
-
     <div id="story-modal" class="quiz-backdrop" hidden>
       <section class="panel quiz-dialog story-dialog" role="dialog" aria-modal="true" aria-labelledby="story-title" tabindex="-1">
         <header class="quiz-header">
@@ -223,7 +199,7 @@
           <button id="story-close" class="quiz-close" type="button" aria-label="Tutup pilihan cerita" data-i18n-aria-label="story.close">×</button>
         </header>
         <div id="story-list" class="story-list"></div>
-        <p class="story-voice-note" data-i18n="story.voice-note">Narasi suara berbahasa Indonesia; subtitle mengikuti bahasa pilihan.</p>
+        <p class="story-voice-note" data-i18n="story.voice-note">Dialog Werkudara–Dewa Ruci menampilkan gestur menunjuk pada tokoh yang berbicara dan meminta akses kamera saat cerita dimulai.</p>
       </section>
     </div>
 

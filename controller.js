@@ -318,6 +318,7 @@ export class Controller {
       body: { x: this.home[i][0], y: this.home[i][1] + Math.sin(t * 0.8 + i) * 6 },
       tilt: 0,
       depth: 0,
+      idle: true,
       arms: {
         left: { type: 'rel', dx: -0.7 + Math.sin(t * 0.9 + i) * 0.15, dy: 0.55 + Math.sin(t * 0.6) * 0.2 },
         right: { type: 'rel', dx: 0.35 + Math.sin(t * 0.8 + 1 + i) * 0.12, dy: 0.85 + Math.sin(t * 0.5) * 0.1 },

@@ -23,19 +23,39 @@ class Arm {
     this.fore = parts['fore' + side];
     this.hand = parts['hand' + side];
     this.shoulder = body.shoulder[side];
-    this.rest = rest[side]; // relaxed hanging pose: offset from the shoulder, body-image pixels
     this.damping = character.armDamping ?? 1;
     this.jointDamping = character.jointDamping ?? this.damping;
 
     const u = sub(this.upper.dist, this.upper.prox);
     this.Lu = len(u);
     this.restU = ang(u);
+    const fore = sub(this.fore.dist, this.fore.prox);
+    const hand = sub(this.hand.grip, this.hand.prox);
     // Forearm + hand act as one rigid link from elbow to the rod grip.
-    const f = add(sub(this.fore.dist, this.fore.prox), sub(this.hand.grip, this.hand.prox));
+    const f = add(fore, hand);
     this.Lf = len(f);
+    const reach = this.Lu + this.Lf;
+    this.minReach = Math.max(
+      Math.abs(this.Lu - this.Lf) + 40,
+      reach * (character.armReach?.min ?? 0),
+    );
+    this.maxReach = Math.min(
+      reach - 0.5,
+      reach * (character.armReach?.max ?? 1),
+    );
     this.restF = ang(f);
-    // Elbows bend outward/downward on both sides.
-    this.bend = character.armBend?.[side] ?? (side === 'L' ? -1 : 1);
+    if (character.id === 'yudistira') {
+      const outward = Math.sign(this.shoulder[0] - body.stickTop[0]) || (side === 'L' ? -1 : 1);
+      const upperAngle = Math.PI / 2 - outward * (25 * Math.PI / 180);
+      const foreAngle = upperAngle + outward * (50 * Math.PI / 180);
+      const restRotU = wrapAngle(upperAngle - this.restU);
+      const restRotF = wrapAngle(foreAngle - ang(fore));
+      this.rest = add(rotV(u, restRotU), rotV(f, restRotF));
+      this.bend = Math.sign(wrapAngle(upperAngle - ang(this.rest))) || -outward;
+    } else {
+      this.rest = rest[side];
+      this.bend = character.armBend?.[side] ?? (side === 'L' ? -1 : 1);
+    }
 
     // Loose riveted joints: under-damped, and the forearm/hand looser than the upper arm, so a snap
     // travels down the arm and the hand whips past and swings back (as in a dalang's sabet).
@@ -52,7 +72,7 @@ class Arm {
     const S = this.shoulder;
     const d = sub(T, S);
     const a = ang(d);
-    const dist = clamp(len(d), Math.abs(this.Lu - this.Lf) + 40, this.Lu + this.Lf - 0.5);
+    const dist = clamp(len(d), this.minReach, this.maxReach);
     const cosA = clamp((this.Lu * this.Lu + dist * dist - this.Lf * this.Lf) / (2 * this.Lu * dist), -1, 1);
     const thU = a + this.bend * Math.acos(cosA);
     const elbow = [S[0] + this.Lu * Math.cos(thU), S[1] + this.Lu * Math.sin(thU)];
@@ -63,11 +83,18 @@ class Arm {
 
   // Joint positions + part matrices in body-image space, then world via B.
   pose(B) {
-    const upperM = Affine.chain(B, Affine.translate(...this.shoulder), Affine.rotate(this.rotU.x), Affine.translate(-this.upper.prox[0], -this.upper.prox[1]));
+    const partMatrix = (part, position, angle) => Affine.chain(
+      B,
+      Affine.translate(...position),
+      Affine.rotate(angle),
+      Affine.scale(part.renderScale),
+      Affine.translate(-part.sourceProx[0], -part.sourceProx[1]),
+    );
+    const upperM = partMatrix(this.upper, this.shoulder, this.rotU.x);
     const elbow = add(this.shoulder, rotV(sub(this.upper.dist, this.upper.prox), this.rotU.x));
-    const foreM = Affine.chain(B, Affine.translate(...elbow), Affine.rotate(this.rotF.x), Affine.translate(-this.fore.prox[0], -this.fore.prox[1]));
+    const foreM = partMatrix(this.fore, elbow, this.rotF.x);
     const wrist = add(elbow, rotV(sub(this.fore.dist, this.fore.prox), this.rotF.x));
-    const handM = Affine.chain(B, Affine.translate(...wrist), Affine.rotate(this.rotH.x), Affine.translate(-this.hand.prox[0], -this.hand.prox[1]));
+    const handM = partMatrix(this.hand, wrist, this.rotH.x);
     const gripLocal = add(wrist, rotV(sub(this.hand.grip, this.hand.prox), this.rotH.x));
     return { upperM, foreM, handM, grip: Affine.apply(B, ...gripLocal) };
   }
@@ -272,7 +299,9 @@ export class Puppet {
     const sL = Affine.apply(B, ...this.body.shoulder.L);
     const sR = Affine.apply(B, ...this.body.shoulder.R);
     const leftArm = sL[0] <= sR[0] ? 'L' : 'R';
-    const specs = {
+    const useConfiguredRest = input.idle
+      && (this.char.id === 'yudistira' || this.char.id === 'dewi-sinta');
+    const specs = useConfiguredRest ? {} : {
       [leftArm]: input.arms?.left,
       [leftArm === 'L' ? 'R' : 'L']: input.arms?.right,
     };
@@ -288,7 +317,14 @@ export class Puppet {
       } else if (spec?.type === 'abs') {
         tgt = [spec.x, spec.y];
       } else {
-        tgt = Affine.apply(B, ...add(arm.shoulder, arm.rest));
+        const idlePhase = side === 'L' ? 0 : Math.PI;
+        const idle = !spec && !D && this.char.id === 'yudistira'
+          ? [
+            Math.sin(t * 0.85 + idlePhase) * this.char.body.size[1] * 0.01,
+            Math.sin(t * 0.62 + idlePhase + 0.7) * this.char.body.size[1] * 0.006,
+          ]
+          : [0, 0];
+        tgt = Affine.apply(B, ...add(add(arm.shoulder, arm.rest), idle));
       }
       if (D) {
         // "L" is always the face-side (front) arm, whichever way the puppet faces
@@ -343,9 +379,9 @@ export class Puppet {
 
     const tilt = this.surfaceTilt;
     const armItems = (side) => [
-      { kind: 'part', id: 'upper' + side, key: this.arms[side].upper.key, size: this.arms[side].upper.size, m: poses[side].upperM, tilt },
-      { kind: 'part', id: 'fore' + side, key: this.arms[side].fore.key, size: this.arms[side].fore.size, m: poses[side].foreM, tilt },
-      { kind: 'part', id: 'hand' + side, key: this.arms[side].hand.key, size: this.arms[side].hand.size, m: poses[side].handM, tilt },
+      { kind: 'part', id: 'upper' + side, key: this.arms[side].upper.key, size: this.arms[side].upper.sourceSize, m: poses[side].upperM, tilt },
+      { kind: 'part', id: 'fore' + side, key: this.arms[side].fore.key, size: this.arms[side].fore.sourceSize, m: poses[side].foreM, tilt },
+      { kind: 'part', id: 'hand' + side, key: this.arms[side].hand.key, size: this.arms[side].hand.sourceSize, m: poses[side].handM, tilt },
     ];
 
     // gapit: a split horn stick down the body's midline, continuing below the frame to the dalang's hand
