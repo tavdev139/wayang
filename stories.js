@@ -150,6 +150,22 @@ export const STORIES = [
           },
         ],
       },
+      {
+        title: 'Gunungan Menutup Kisah',
+        titleEn: 'The Gunungan Closes the Story',
+        chapter: 'welgeduwelbeh',
+        background: 'story-welgeduwelbeh-palace',
+        motion: 'gunungan',
+        puppetCharacters: ['wayang-emas', 'petruk'],
+        duration: 5.5,
+        lines: [
+          {
+            at: 0,
+            text: 'Gunungan ditancepkan sebagai penutup pagelaran sebelum kisah berlanjut ke kuis.',
+            textEn: 'The gunungan is raised to close the performance before the quiz begins.',
+          },
+        ],
+      },
     ],
   },
   {
@@ -1106,7 +1122,18 @@ export function storyInputs(story, lineIndex, elapsed, view) {
     const speaker = scene.lines[sceneLine]?.actor;
     const tense = Math.sin(chapterElapsed * 0.9);
 
-    if (scene.motion === 'welgeduwelbeh') {
+    if (scene.motion === 'gunungan') {
+      gatot.x = 0.13;
+      petruk.x = 0.87;
+      gatot.y = 0.76;
+      petruk.y = 0.76;
+      gatot.tilt = -0.07;
+      petruk.tilt = 0.07;
+      gatot.left = [-0.38, 0.38];
+      gatot.right = [0.38, 0.38];
+      petruk.left = [-0.38, 0.38];
+      petruk.right = [0.38, 0.38];
+    } else if (scene.motion === 'welgeduwelbeh') {
       gatot.tilt = 0.035 + tense * 0.018;
       petruk.tilt = -0.015 + Math.sin(chapterElapsed * 0.65) * 0.02;
       gatot.left = [-0.44, -0.08 - tense * 0.08];

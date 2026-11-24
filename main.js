@@ -4,7 +4,7 @@ import { CHARACTERS, CHARACTER_LIST, DEFAULT_CHARACTER, DEFAULT_PAIR, characterT
 import { HandTracker } from './tracking.js';
 import { Controller } from './controller.js';
 import { BackgroundMusic, BeatClock } from './audio.js';
-import { clamp, noise1 } from './math.js';
+import { Affine, clamp, noise1, smoothstep } from './math.js';
 import { STORIES, storyInputs, storySpeakerInputs } from './stories.js';
 import { applyTranslations, getLanguage, setLanguage, t } from './i18n.js';
 
@@ -160,6 +160,7 @@ try {
   await Promise.all([
     ...BACKGROUNDS.map(({ key, src }) => renderer.loadTexture(key, src)),
     ...STORY_BACKGROUNDS.map(({ key, src }) => renderer.loadTexture(key, src)),
+    renderer.loadTexture('story-gunungan', 'assets/gunungan.png'),
     // every character in characters.js, each under its own "<id>/<part>" key
     ...characterTextures().map(([key, src]) => renderer.loadTexture(key, src)),
   ]);
@@ -741,6 +742,30 @@ function renderStoryList() {
   }
 }
 
+function withGununganEnding(story) {
+  const lastScene = story.scenes[story.scenes.length - 1];
+  if (!lastScene) throw new RangeError(`Story "${story.id}" has no scenes`);
+  if (lastScene.motion === 'gunungan') return story;
+  return {
+    ...story,
+    scenes: [
+      ...story.scenes,
+      {
+        title: 'Gunungan Menutup Kisah',
+        titleEn: 'The Gunungan Closes the Story',
+        background: storyBackgroundAt(lastScene, lastScene.duration),
+        motion: 'gunungan',
+        duration: 5.5,
+        lines: [{
+          at: 0,
+          text: 'Gunungan ditancepkan untuk menutup pagelaran.',
+          textEn: 'The gunungan is raised to close the performance.',
+        }],
+      },
+    ],
+  };
+}
+
 function setPuppetFacing(puppet, facing) {
   puppet.facing = facing;
   puppet.flip = { from: facing, to: facing, t: 1 };
@@ -755,6 +780,7 @@ function setPuppetFacing(puppet, facing) {
 }
 
 async function startStory(story) {
+  story = withGununganEnding(story);
   const characters = story.characters.map((id) => {
     const character = CHARACTERS[id];
     if (!character) throw new Error(`Story "${story.id}" references unknown character "${id}"`);
@@ -1488,6 +1514,50 @@ function drawPreview() {
   if (!previewBox.hidden && cameraReady()) drawCamera(pctx, preview.width, preview.height);
 }
 
+function addGununganClosing(layers, elapsed) {
+  const rise = smoothstep(0, 1.15, elapsed);
+  const shake = Math.exp(-elapsed * 0.9);
+  const width = 331;
+  const height = 543;
+  const scale = (view.h * 0.7 / height) * (0.92 + 0.08 * rise);
+  const angle = Math.sin(elapsed * 10) * 0.14 * shake + Math.sin(elapsed * 2.8) * 0.01;
+  const centerX = view.x + view.w / 2 + Math.sin(elapsed * 10) * view.w * 0.025 * shake;
+  const baseY = view.y + view.h * (1.24 - 0.36 * rise)
+    - Math.abs(Math.sin(elapsed * 10)) * view.h * 0.018 * shake;
+  const matrix = Affine.chain(
+    Affine.translate(centerX, baseY),
+    Affine.rotate(angle),
+    Affine.scale(scale),
+    Affine.translate(-width / 2, -height),
+  );
+  const rodWidth = view.h * 0.008;
+  const rod = {
+    kind: 'stick',
+    id: 'gunungan-gapit',
+    style: 'gapit',
+    pts: [
+      { p: Affine.apply(matrix, width / 2, height * 0.91), w: rodWidth * 0.55 },
+      { p: Affine.apply(matrix, width / 2, height), w: rodWidth },
+      { p: Affine.apply(matrix, width / 2, height + view.h * 0.27 / scale), w: rodWidth * 1.5 },
+    ],
+    ties: [[view.h * 0.12, rodWidth], [view.h * 0.2, rodWidth]],
+  };
+  const gunungan = {
+    kind: 'part',
+    id: 'gunungan',
+    key: 'story-gunungan',
+    size: [width, height],
+    m: matrix,
+    alpha: 1,
+  };
+  const puppetAlpha = 1 - smoothstep(0.1, 1.2, elapsed);
+  for (const layer of layers) {
+    for (const item of layer.items) item.alpha = (item.alpha ?? 1) * puppetAlpha;
+  }
+  const foreground = layers[layers.length - 1];
+  if (foreground) foreground.items.push(rod, gunungan);
+}
+
 // ---------- loop ----------
 let last = performance.now() / 1000;
 const PHYS_DT = 1 / 120;
@@ -1531,6 +1601,10 @@ function tick(nowMs) {
       };
     })
     .sort((a, b) => a.depth - b.depth);
+  const activeScene = storyState?.story.scenes[storyState.audioSceneIndex];
+  if (activeScene?.motion === 'gunungan') {
+    addGununganClosing(layers, storyState.textTime);
+  }
 
   // blencong: an oil flame — flicker, and a slow sway that nudges every shadow
   const flicker = 1 + 0.03 * Math.sin(nowSeconds * 7.3) + 0.02 * Math.sin(nowSeconds * 13.7 + 1.1) + (noise1(nowSeconds * 6.5) - 0.5) * 0.07;
