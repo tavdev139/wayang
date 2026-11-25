@@ -273,6 +273,9 @@ $('use-mouse').addEventListener('click', () => {
   intro.classList.add('gone');
   showChromeForActivity();
 });
+$('home-toggle').addEventListener('click', () => {
+  window.location.reload();
+});
 
 canvas.addEventListener('pointermove', (e) => {
   controller.mouse.x = view.x + (e.clientX / innerWidth) * view.w;

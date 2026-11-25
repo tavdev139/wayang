@@ -266,6 +266,7 @@ h1 {
 .icon-btn:hover { border-color: rgba(217, 164, 65, 0.6); }
 #menu-toggle { left: 16px; right: auto; }
 #menu-toggle:disabled { cursor: default; }
+#home-toggle { left: 62px; right: auto; }
 .sound-control {
   position: fixed;
   z-index: 26;
