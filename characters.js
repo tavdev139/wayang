@@ -120,17 +120,18 @@ const DEWI_SINTA_ARMS = {
   },
 };
 
-// Semar: pivots are measured from the rivet holes in the user's cut-parts photo.
+// Semar: the new cut-out parts are high-resolution close-ups, so their rivet-hole pivots
+// are measured on the source PNGs and the pieces are shrunk to body scale by armPartScale.
 const SEMAR_ARMS = {
   L: {
-    upper: { src: 'assets/upper-arm-semar-l.png', size: [161, 218], prox: [142.1, 17.7], dist: [40, 196.3] },
-    fore: { src: 'assets/forearm-semar-l.png', size: [60, 233], prox: [29.7, 19.7], dist: [31.3, 224.6] },
-    hand: { src: 'assets/hand-semar-l.png', size: [139, 159], prox: [68.6, 25.2], grip: [66.8, 83.8] },
+    upper: { src: 'assets/upper-arm-semar-l.png', size: [79, 467], prox: [39.5, 39], dist: [39.5, 424.5] },
+    fore: { src: 'assets/forearm-semar-l.png', size: [80, 525], prox: [41, 37.5], dist: [40.5, 484] },
+    hand: { src: 'assets/hand-semar-l.png', size: [132, 308], prox: [58.5, 23.5], grip: [57.1, 302.3] },
   },
   R: {
-    upper: { src: 'assets/upper-arm-semar-r.png', size: [180, 66], prox: [14.4, 36.8], dist: [165, 28.1] },
-    fore: { src: 'assets/forearm-semar-r.png', size: [151, 174], prox: [138, 170], dist: [76.8, 53.9] },
-    hand: { src: 'assets/hand-semar-r.png', size: [104, 116], prox: [15.6, 106.9], grip: [89.7, 13] },
+    upper: { src: 'assets/upper-arm-semar-r.png', size: [78, 470], prox: [40.5, 38.5], dist: [40.5, 428.5] },
+    fore: { src: 'assets/forearm-semar-r.png', size: [81, 526], prox: [39.5, 40.5], dist: [40, 488] },
+    hand: { src: 'assets/hand-semar-r.png', size: [131, 308], prox: [71.5, 23], grip: [73.1, 302.3] },
   },
 };
 
@@ -322,13 +323,14 @@ const RAW = [
       ties: [350, 660, 820],
     },
     arms: SEMAR_ARMS,
+    armPartScale: { upper: 0.45, fore: 0.45, hand: 0.45 },
     armDamping: 1.5,
     jointDamping: 2.8,
     armReach: { min: 0.4, max: 0.96 },
-    armBend: { L: 1, R: -1 },
+    armBend: { L: -1, R: -1 },
     armsOnTop: true,
     rigidHand: true,
-    rest: { L: [-90, 420], R: [250, -90] },
+    rest: { L: [-360, 270], R: [308, 45] },
   },
   {
     id: 'petruk',
